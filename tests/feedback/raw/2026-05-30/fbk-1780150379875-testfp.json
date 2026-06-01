@@ -1,0 +1,16 @@
+{
+  "id": "fbk-1780150379875-testfp",
+  "source": "test",
+  "type": "text",
+  "content": {
+    "text": "页面加载非常缓慢需要优化",
+    "screenshots": [],
+    "fingerprint": "testfp"
+  },
+  "meta": {
+    "timestamp": "2026-05-30T14:12:59.875Z",
+    "version": "test",
+    "page": "/test",
+    "user_agent": "test"
+  }
+}

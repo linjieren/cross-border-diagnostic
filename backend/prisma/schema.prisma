@@ -1,0 +1,131 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Feedback {
+  id        String   @id
+  source    String
+  type      String
+  text      String
+  screenshots String[]
+  fingerprint String?
+  version   String?
+  page      String?
+  userAgent String?
+  timestamp DateTime @map("submitted_at")
+
+  status     String   @default("new")
+  category   String?
+  priority   String?
+  duplicateOf String? @map("duplicate_of")
+  duplicateGroupId String? @map("duplicate_group_id")
+  notes      String?
+  evaluatedAt DateTime? @map("evaluated_at")
+
+  requirementId String? @map("requirement_id")
+  devTaskId     String? @map("dev_task_id")
+  assignedTo    String? @map("assigned_to")
+  verifiedAt    DateTime? @map("verified_at")
+  closedAt      DateTime? @map("closed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("feedbacks")
+}
+
+model User {
+  id            String   @id
+  email         String?  @unique
+  phone         String?  @unique
+  wechatOpenId  String?  @unique @map("wechat_openid")
+  wechatUnionId String?  @unique @map("wechat_unionid")
+  avatar        String?
+  name          String?
+
+  sessions      DiagnosticSession[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model DiagnosticSession {
+  id             String   @id
+  url            String
+  targetMarket   String   @map("target_market")
+  status         String   @default("in_progress")
+  userId         String?  @map("user_id")
+  language       String?  @default("zh-CN") @map("language")
+  agentSteps     Json?    @map("agent_steps")
+  reportMarkdown String?  @db.Text @map("report_markdown")
+  reportHtml     String?  @db.Text @map("report_html")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user  User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  pages DiagnosticPage[]
+  chats ConsultantChat[]
+
+  @@map("diagnostic_sessions")
+}
+
+model DiagnosticPage {
+  id            String  @id
+  sessionId     String  @map("session_id")
+  url           String
+  title         String?
+  screenshotUrl String? @map("screenshot_url")
+  status        String  @default("pending")
+  pageType      String? @map("page_type")
+  depth         Int     @default(0)
+  weight        Float   @default(1)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  session  DiagnosticSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  results  DiagnosticResult[]
+
+  @@map("diagnostic_pages")
+}
+
+model DiagnosticResult {
+  id         String  @id
+  pageId     String  @map("page_id")
+  module     String
+  status     String  @default("pending")
+  score      Int?
+  findings   Json?
+  reportData Json?   @map("report_data")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  page DiagnosticPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@map("diagnostic_results")
+}
+
+model ConsultantChat {
+  id        String   @id
+  sessionId String   @map("session_id")
+  role      String
+  message   String
+  intent    String?
+  quotedText String? @map("quoted_text")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session DiagnosticSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("consultant_chats")
+}

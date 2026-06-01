@@ -1,0 +1,16 @@
+{
+  "id": "fbk-1780150374429-testfp",
+  "source": "test",
+  "type": "text",
+  "content": {
+    "text": "unique 筛选测试",
+    "screenshots": [],
+    "fingerprint": "testfp"
+  },
+  "meta": {
+    "timestamp": "2026-05-30T14:12:54.427Z",
+    "version": "test",
+    "page": "/test",
+    "user_agent": "test"
+  }
+}

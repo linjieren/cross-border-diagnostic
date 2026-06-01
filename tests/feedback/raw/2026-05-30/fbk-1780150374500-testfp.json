@@ -1,0 +1,16 @@
+{
+  "id": "fbk-1780150374500-testfp",
+  "source": "test",
+  "type": "text",
+  "content": {
+    "text": "登录按钮颜色看不清楚要改",
+    "screenshots": [],
+    "fingerprint": "testfp"
+  },
+  "meta": {
+    "timestamp": "2026-05-30T14:12:54.499Z",
+    "version": "test",
+    "page": "/test",
+    "user_agent": "test"
+  }
+}

@@ -1,0 +1,108 @@
+[
+  {
+    "id": "fbk-1717000000001-a1b2c3d4",
+    "source": "dev-feedback-button",
+    "type": "text",
+    "content": {
+      "text": "点了保存按钮没反应，页面一直转圈",
+      "fingerprint": "a1b2c3d4"
+    },
+    "meta": {
+      "timestamp": "2026-05-30T10:00:00Z",
+      "version": "dev-0.1.0",
+      "page": "/editor",
+      "user_agent": "Mozilla/5.0"
+    }
+  },
+  {
+    "id": "fbk-1717000000002-e5f6a7b8",
+    "source": "dev-feedback-button",
+    "type": "both",
+    "content": {
+      "text": "页面白屏了，什么都看不到",
+      "screenshots": ["screenshots/fbk-1717000000002-e5f6a7b8.png"],
+      "fingerprint": "e5f6a7b8"
+    },
+    "meta": {
+      "timestamp": "2026-05-30T10:05:00Z",
+      "version": "dev-0.1.0",
+      "page": "/dashboard",
+      "user_agent": "Mozilla/5.0"
+    }
+  },
+  {
+    "id": "fbk-1717000000003-a9b0c1d2",
+    "source": "dev-feedback-button",
+    "type": "text",
+    "content": {
+      "text": "希望能加个批量删除的功能，一个个删太慢了",
+      "fingerprint": "a9b0c1d2"
+    },
+    "meta": {
+      "timestamp": "2026-05-30T10:10:00Z",
+      "version": "dev-0.1.0",
+      "page": "/list",
+      "user_agent": "Mozilla/5.0"
+    }
+  },
+  {
+    "id": "fbk-1717000000004-a3b4c5d6",
+    "source": "dev-feedback-button",
+    "type": "text",
+    "content": {
+      "text": "打开列表页面要等 5 秒，太慢了",
+      "fingerprint": "a3b4c5d6"
+    },
+    "meta": {
+      "timestamp": "2026-05-30T10:15:00Z",
+      "version": "dev-0.1.0",
+      "page": "/list",
+      "user_agent": "Mozilla/5.0"
+    }
+  },
+  {
+    "id": "fbk-1717000000005-a7b8c9d0",
+    "source": "dev-feedback-button",
+    "type": "text",
+    "content": {
+      "text": "按钮颜色看不清，和背景太接近了",
+      "fingerprint": "a7b8c9d0"
+    },
+    "meta": {
+      "timestamp": "2026-05-30T10:20:00Z",
+      "version": "dev-0.1.0",
+      "page": "/settings",
+      "user_agent": "Mozilla/5.0"
+    }
+  },
+  {
+    "id": "fbk-1717000000006-c1d2e3f4",
+    "source": "dev-feedback-button",
+    "type": "text",
+    "content": {
+      "text": "点了保存按钮没有反应，页面一直转圈圈",
+      "fingerprint": "a1b2c3d4"
+    },
+    "meta": {
+      "timestamp": "2026-05-30T10:25:00Z",
+      "version": "dev-0.1.0",
+      "page": "/editor",
+      "user_agent": "Mozilla/5.0"
+    }
+  },
+  {
+    "id": "fbk-1717000000007-a5b6c7d8",
+    "source": "manual_entry",
+    "type": "text",
+    "content": {
+      "text": "登录页面的密码框不支持显示/隐藏切换",
+      "fingerprint": "a5b6c7d8"
+    },
+    "meta": {
+      "timestamp": "2026-05-30T11:00:00Z",
+      "version": "dev-0.1.0",
+      "page": "/login",
+      "user_agent": "Mozilla/5.0"
+    }
+  }
+]

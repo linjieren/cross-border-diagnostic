@@ -1,0 +1,26 @@
+{
+  "name": "feedback-platform-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "自动化测试套件 - 反馈处理平台",
+  "type": "module",
+  "scripts": {
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:integration": "vitest run --config vitest.config.ts --dir integration",
+    "test:e2e": "playwright test --config playwright.config.ts",
+    "test:all": "vitest run --config vitest.config.ts && playwright test --config playwright.config.ts",
+    "test:watch": "vitest --config vitest.config.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^22.19.19",
+    "ajv": "^8.20.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.7"
+  },
+  "dependencies": {
+    "@types/supertest": "^7.2.0",
+    "express": "^5.2.1",
+    "supertest": "^7.2.2"
+  }
+}

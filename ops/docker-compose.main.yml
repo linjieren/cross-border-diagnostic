@@ -1,0 +1,19 @@
+services:
+  nginx:
+    ports:
+      - "${MAIN_PORT:-80}:80"
+
+  backend:
+    environment:
+      - NODE_ENV=production
+    restart: always
+
+  frontend:
+    environment:
+    restart: always
+
+  db:
+    restart: always
+
+  redis:
+    restart: always

@@ -1,0 +1,122 @@
+{
+  "assessed_count": 6,
+  "duplicate_count": 1,
+  "summary": "共评估 6 条反馈；其中 2 条高优先级需立即关注；1 条疑似重复；分类分布: {'bug': 2, 'feature_request': 2, 'feedback': 2}",
+  "generated_at": "2026-05-30T13:14:53.234749",
+  "high_priority": [
+    {
+      "source_id": "fbk-1780146881519-00000000",
+      "title": "支付页面点结算后直接闪退，微信和支付宝都一样",
+      "body": "支付页面点结算后直接闪退，微信和支付宝都一样",
+      "feedback_type": "bug",
+      "severity": "critical",
+      "priority_score": 100.0,
+      "category_tags": [
+        "crash",
+        "payment"
+      ],
+      "action_recommendation": "立即处理：高严重度且影响核心功能",
+      "is_duplicate_of": null
+    },
+    {
+      "source_id": "fbk-1780146849511-00000000",
+      "title": "App在启动时偶尔白屏，需要等待5秒左右才恢复正常",
+      "body": "App在启动时偶尔白屏，需要等待5秒左右才恢复正常",
+      "feedback_type": "bug",
+      "severity": "high",
+      "priority_score": 95.0,
+      "category_tags": [
+        "crash"
+      ],
+      "action_recommendation": "立即处理：高严重度且影响核心功能",
+      "is_duplicate_of": null
+    }
+  ],
+  "new_bugs": [
+    {
+      "source_id": "fbk-1780146849511-00000000",
+      "title": "App在启动时偶尔白屏，需要等待5秒左右才恢复正常",
+      "body": "App在启动时偶尔白屏，需要等待5秒左右才恢复正常",
+      "feedback_type": "bug",
+      "severity": "high",
+      "priority_score": 95.0,
+      "category_tags": [
+        "crash"
+      ],
+      "action_recommendation": "立即处理：高严重度且影响核心功能",
+      "is_duplicate_of": null
+    },
+    {
+      "source_id": "fbk-1780146881519-00000000",
+      "title": "支付页面点结算后直接闪退，微信和支付宝都一样",
+      "body": "支付页面点结算后直接闪退，微信和支付宝都一样",
+      "feedback_type": "bug",
+      "severity": "critical",
+      "priority_score": 100.0,
+      "category_tags": [
+        "crash",
+        "payment"
+      ],
+      "action_recommendation": "立即处理：高严重度且影响核心功能",
+      "is_duplicate_of": null
+    }
+  ],
+  "feature_requests": [
+    {
+      "source_id": "fbk-1780146881488-00000000",
+      "title": "希望增加批量删除功能，一个个删太慢了",
+      "body": "希望增加批量删除功能，一个个删太慢了",
+      "feedback_type": "feature_request",
+      "severity": "low",
+      "priority_score": 40.0,
+      "category_tags": [
+        "performance",
+        "feature_gap"
+      ],
+      "action_recommendation": "排入 backlog：值得做，但不紧急",
+      "is_duplicate_of": null
+    },
+    {
+      "source_id": "fbk-1780146881576-00000000",
+      "title": "希望增加批量删除功能，一个个删太慢了",
+      "body": "希望增加批量删除功能，一个个删太慢了",
+      "feedback_type": "feature_request",
+      "severity": "low",
+      "priority_score": 40.0,
+      "category_tags": [
+        "performance",
+        "feature_gap"
+      ],
+      "action_recommendation": "排入 backlog：值得做，但不紧急",
+      "is_duplicate_of": "fbk-1780146881488-00000000"
+    }
+  ],
+  "general_feedback": [
+    {
+      "source_id": "fbk-1780146881537-00000000",
+      "title": "按钮颜色太浅了，老年人根本看不清",
+      "body": "按钮颜色太浅了，老年人根本看不清",
+      "feedback_type": "feedback",
+      "severity": "medium",
+      "priority_score": 60.0,
+      "category_tags": [
+        "ui/ux"
+      ],
+      "action_recommendation": "本迭代处理：用户影响较大，排入当前开发周期",
+      "is_duplicate_of": null
+    },
+    {
+      "source_id": "fbk-1780146881557-00000000",
+      "title": "列表滚动很卡顿，加载更多时等了十几秒",
+      "body": "列表滚动很卡顿，加载更多时等了十几秒",
+      "feedback_type": "feedback",
+      "severity": "medium",
+      "priority_score": 60.0,
+      "category_tags": [
+        "performance"
+      ],
+      "action_recommendation": "本迭代处理：用户影响较大，排入当前开发周期",
+      "is_duplicate_of": null
+    }
+  ]
+}

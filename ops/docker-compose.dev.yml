@@ -1,0 +1,22 @@
+services:
+  nginx:
+    ports:
+      - "${DEV_PORT:-8081}:80"
+
+  backend:
+    environment:
+      - NODE_ENV=development
+    build:
+      target: development
+    volumes:
+      - ../backend/src:/app/src:ro
+      - ../backend/prisma:/app/prisma:ro
+
+  frontend:
+    environment:
+    build:
+      target: development
+
+  db:
+    ports:
+      - "127.0.0.1:${DEV_DB_PORT:-5433}:5432"

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Feedback Entry",
+  "description": "用户反馈数据模型 - 定义 dev 版本用户反馈的完整结构",
+  "type": "object",
+  "required": ["id", "source", "type", "content", "meta"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "反馈唯一 ID，格式: fbk-{timestamp}-{content_hash_8}",
+      "pattern": "^fbk-\\d{13}-[a-f0-9]{8}$"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["dev-feedback-button", "manual_entry", "external"],
+      "description": "反馈来源渠道"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["text", "screenshot", "both"],
+      "description": "反馈类型"
+    },
+    "content": {
+      "type": "object",
+      "required": ["text"],
+      "properties": {
+        "text": { "type": "string", "description": "用户反馈文字内容" },
+        "screenshots": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "截图文件路径列表"
+        },
+        "fingerprint": { "type": "string", "description": "内容指纹，用于去重" }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "version": { "type": "string", "description": "dev 版本标识" },
+        "page": { "type": "string", "description": "用户提交反馈时所在的页面路由" },
+        "user_agent": { "type": "string" }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["new", "duplicate_of", "evaluated", "accepted", "rejected", "in_development", "verified", "closed"],
+          "description": "反馈生命周期状态"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["bug", "ui_ux", "feature_request", "performance", "other"]
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["p0_critical", "p1_high", "p2_medium", "p3_low"]
+        },
+        "duplicate_of": { "type": "string", "description": "如果是重复反馈，指向原始反馈 ID" },
+        "notes": { "type": "string", "description": "评估备注" },
+        "evaluated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "iteration": {
+      "type": "object",
+      "properties": {
+        "requirement_id": { "type": "string", "description": "转化后的需求 ID" },
+        "dev_task_id": { "type": "string", "description": "开发线任务 ID" },
+        "assigned_to": { "type": "string", "description": "指派给哪条开发子线" },
+        "verified_at": { "type": "string", "format": "date-time" },
+        "closed_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

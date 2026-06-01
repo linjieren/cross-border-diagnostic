@@ -1,0 +1,16 @@
+{
+  "id": "fbk-1780150374448-testfp",
+  "source": "test",
+  "type": "text",
+  "content": {
+    "text": "保存按钮没反应",
+    "screenshots": [],
+    "fingerprint": "testfp"
+  },
+  "meta": {
+    "timestamp": "2026-05-30T14:12:54.447Z",
+    "version": "test",
+    "page": "/test",
+    "user_agent": "test"
+  }
+}
