@@ -33,7 +33,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - PORT=${BACKEND_PORT:-3000}
       - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret-change-in-production}
-      - DEEPSEEK_API_KEY=sk-8bd8a22503e34e639dafa3de616c8ec8
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - DEEPSEEK_BASE_URL=https://api.deepseek.com
       - DEEPSEEK_MODEL=deepseek-chat
     depends_on:
