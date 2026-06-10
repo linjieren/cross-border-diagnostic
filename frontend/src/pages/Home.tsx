@@ -3,6 +3,22 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Logo from '../components/Logo'
 
+function toErrorMessage(value: unknown, fallback: string): string {
+  if (!value) return fallback
+  if (typeof value === 'string') return value
+  if (value instanceof Error) return value.message || fallback
+
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    for (const key of ['error', 'message', 'detail']) {
+      const nested = record[key]
+      if (typeof nested === 'string' && nested.trim()) return nested
+    }
+  }
+
+  return fallback
+}
+
 export default function Home() {
   const [url, setUrl] = useState('')
   const [targetMarket, setTargetMarket] = useState('')
@@ -64,12 +80,12 @@ export default function Home() {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || t('home.errorCreateSession'))
+        throw new Error(toErrorMessage(data, t('home.errorCreateSession')))
       }
       const session = await res.json()
       navigate(`/thinking/${session.sessionId}`)
     } catch (err: any) {
-      setError(err.message || t('home.errorNetwork'))
+      setError(toErrorMessage(err, t('home.errorNetwork')))
     } finally {
       setLoading(false)
     }

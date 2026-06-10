@@ -7,6 +7,7 @@ node_modules/
 .env
 .env.*
 !.env.template
+!.env.example
 
 # Build outputs
 dist/
@@ -41,4 +42,3 @@ remediation-report/
 # Runtime generated files
 backend/diagnostic/reports/
 backend/diagnostic/screenshots/
-

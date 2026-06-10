@@ -151,6 +151,8 @@
     "proxyFailed": "代理失败",
     "screenshotFailed": "截图失败",
     "internalError": "内部错误",
+    "databaseUnavailable": "数据库服务未启动",
+    "databaseUnavailableDetail": "当前无法连接诊断数据库，请先启动本地数据库服务后再重试。",
     "sessionIdRequired": "sessionId 为必填项",
     "urlAndSessionIdRequired": "url 和 sessionId 为必填项",
     "reportGenerationFailed": "报告生成失败",

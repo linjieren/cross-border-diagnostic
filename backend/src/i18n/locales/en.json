@@ -151,6 +151,8 @@
     "proxyFailed": "proxy failed",
     "screenshotFailed": "screenshot failed",
     "internalError": "internal error",
+    "databaseUnavailable": "database service is unavailable",
+    "databaseUnavailableDetail": "The diagnostic database is not reachable right now. Start the local database service and try again.",
     "sessionIdRequired": "sessionId is required",
     "urlAndSessionIdRequired": "url and sessionId are required",
     "reportGenerationFailed": "report generation failed",

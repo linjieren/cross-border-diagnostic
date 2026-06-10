@@ -22,6 +22,46 @@ interface StepData {
   error?: string;
 }
 
+function isMissingDeepSeekApiKey(err: unknown): boolean {
+  return err instanceof Error && err.message.includes("DEEPSEEK_API_KEY is not configured");
+}
+
+function inferProductUnderstanding(pageContent: {
+  title: string;
+  metaDesc: string;
+  h1: string;
+  text: string;
+}) {
+  const combined = [pageContent.title, pageContent.metaDesc, pageContent.h1, pageContent.text]
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const headline = pageContent.h1 || pageContent.title || "已读取页面内容";
+  const lower = combined.toLowerCase();
+  const productType =
+    lower.includes("glasses") || lower.includes("wearable")
+      ? "AI wearable / smart glasses"
+      : lower.includes("software") || lower.includes("platform")
+        ? "software platform"
+        : headline;
+
+  return {
+    productType,
+    targetAudience: "需要结合目标市场进一步验证的海外潜在用户",
+    keyValueProposition: headline,
+    mainConcerns: [
+      "当前为规则识别结果，未使用大模型进行深度语义判断",
+      pageContent.metaDesc || "页面缺少可直接提取的 meta description",
+    ],
+    recommendedFocus: [
+      "补齐清晰的产品定位、目标用户和核心卖点表达",
+      "结合后续四个模块检查结果优先处理影响转化的问题",
+    ],
+    source: "rule_based_fallback",
+  };
+}
+
 export async function runAgentDiagnosis(
   sessionId: string,
   url: string,
@@ -58,18 +98,28 @@ export async function runAgentDiagnosis(
 
     emit({ type: "step-think", step: 1, payload: { message: "Analyzing page content with DeepSeek..." } });
 
-    const understandingRaw = await callDeepSeek({
-      messages: step1Messages,
-      temperature: 0.4,
-      maxTokens: 2048,
-      responseFormat: { type: "json_object" },
-    });
-
     let understanding: any;
     try {
-      understanding = JSON.parse(understandingRaw);
-    } catch {
-      understanding = { raw: understandingRaw };
+      const understandingRaw = await callDeepSeek({
+        messages: step1Messages,
+        temperature: 0.4,
+        maxTokens: 2048,
+        responseFormat: { type: "json_object" },
+      });
+
+      try {
+        understanding = JSON.parse(understandingRaw);
+      } catch {
+        understanding = { raw: understandingRaw };
+      }
+    } catch (err) {
+      if (!isMissingDeepSeekApiKey(err)) throw err;
+      understanding = inferProductUnderstanding(pageContent);
+      emit({
+        type: "step-think",
+        step: 1,
+        payload: { message: "DEEPSEEK_API_KEY 未配置，已切换为规则识别模式。" },
+      });
     }
 
     const step1Result: StepData = {

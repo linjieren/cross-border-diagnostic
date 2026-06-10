@@ -61,13 +61,13 @@ function getScoreLabel(t: (key: string) => string, score: number | null): string
 function getStatusBadge(t: (key: string) => string, status: string): { label: string; className: string } {
   switch (status) {
     case 'completed':
-      return { label: t('diagnosis.statusCompleted'), className: 'bg-green-100 text-green-700' }
+      return { label: t('diagnosis.statusCompleted'), className: 'gm-chip gm-chip--success' }
     case 'in_progress':
-      return { label: t('diagnosis.statusAnalyzing'), className: 'bg-blue-100 text-blue-700' }
+      return { label: t('diagnosis.statusAnalyzing'), className: 'gm-chip gm-chip--info' }
     case 'failed':
-      return { label: t('diagnosis.statusFailed'), className: 'bg-red-100 text-red-700' }
+      return { label: t('diagnosis.statusFailed'), className: 'gm-chip gm-chip--danger' }
     default:
-      return { label: status, className: 'bg-gray-100 text-gray-700' }
+      return { label: status, className: 'gm-chip gm-chip--neutral' }
   }
 }
 
@@ -84,30 +84,30 @@ function getModuleName(t: (key: string) => string, module: string): string {
 function getTypeBadge(t: (key: string) => string, type?: string): { label: string; className: string } {
   switch (type) {
     case 'agent':
-      return { label: t('history.typeAgent'), className: 'bg-purple-100 text-purple-700' }
+      return { label: t('history.typeAgent'), className: 'gm-chip gm-chip--info' }
     case 'legacy':
-      return { label: t('history.typeLegacy'), className: 'bg-gray-100 text-gray-600' }
+      return { label: t('history.typeLegacy'), className: 'gm-chip gm-chip--neutral' }
     default:
-      return { label: t('history.typeLegacy'), className: 'bg-gray-100 text-gray-600' }
+      return { label: t('history.typeLegacy'), className: 'gm-chip gm-chip--neutral' }
   }
 }
 
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 animate-pulse">
+    <div className="gm-history-card p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0 space-y-3">
           <div className="flex items-center gap-2">
-            <div className="h-5 w-48 bg-gray-200 rounded" />
-            <div className="h-5 w-16 bg-gray-200 rounded-full" />
+            <div className="h-5 w-48 rounded gm-skeleton" />
+            <div className="h-5 w-16 rounded-full gm-skeleton" />
           </div>
           <div className="flex items-center gap-4">
-            <div className="h-4 w-32 bg-gray-200 rounded" />
-            <div className="h-4 w-40 bg-gray-200 rounded" />
+            <div className="h-4 w-32 rounded gm-skeleton" />
+            <div className="h-4 w-40 rounded gm-skeleton" />
           </div>
-          <div className="h-4 w-24 bg-gray-200 rounded" />
+          <div className="h-4 w-24 rounded gm-skeleton" />
         </div>
-        <div className="shrink-0 w-16 h-16 bg-gray-200 rounded-xl" />
+        <div className="shrink-0 w-16 h-16 rounded-xl gm-skeleton" />
       </div>
     </div>
   )
@@ -186,13 +186,13 @@ export default function HistoryPage() {
 
   if (isLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="gm-history-shell">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <div className="h-7 w-24 bg-gray-200 rounded animate-pulse" />
-            <div className="h-5 w-20 bg-gray-200 rounded animate-pulse" />
+          <div className="gm-history-header">
+            <div className="h-7 w-24 rounded gm-skeleton" />
+            <div className="h-5 w-20 rounded gm-skeleton" />
           </div>
-          <div className="space-y-3">
+          <div className="gm-history-grid">
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
@@ -204,12 +204,12 @@ export default function HistoryPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="gm-shell min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
           <div className="text-red-600 mb-4">{error}</div>
           <button
             onClick={() => fetchHistory()}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            className="gm-btn gm-btn-primary"
           >
             {t('common.retry')}
           </button>
@@ -222,10 +222,10 @@ export default function HistoryPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="gm-shell min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-md">
-          <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-5">
-            <svg className="w-10 h-10 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(66,133,244,0.1)' }}>
+            <svg className="w-10 h-10 text-[#4285F4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
             </svg>
           </div>
@@ -233,7 +233,7 @@ export default function HistoryPage() {
           <p className="text-gray-500 mb-8">{t('history.emptyDesc')}</p>
           <Link
             to="/"
-            className="inline-block px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            className="gm-btn gm-btn-primary"
           >
             {t('history.emptyCta')}
           </Link>
@@ -243,19 +243,18 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="gm-history-shell">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+        <div className="gm-history-header">
           <h1 className="text-xl font-bold text-gray-900">{t('history.title')}</h1>
-          <span className="text-sm text-gray-500">{t('history.total', { total: data?.pagination.total || 0 })}</span>
+          <span className="gm-meta-copy">{t('history.total', { total: data?.pagination.total || 0 })}</span>
         </div>
 
-        <div className="space-y-3">
+        <div className="gm-history-grid">
           {items.map((item) => {
             const statusBadge = getStatusBadge(t, item.status)
             const typeBadge = getTypeBadge(t, item.type)
             const scoreColor = getScoreColor(item.overallScore)
-            const scoreBg = getScoreBg(item.overallScore)
             const scoreBorder = getScoreBorder(item.overallScore)
             const scoreLabel = getScoreLabel(t, item.overallScore)
 
@@ -274,21 +273,21 @@ export default function HistoryPage() {
             return (
               <div
                 key={item.sessionId}
-                className="block bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-indigo-200 transition"
+                className="gm-history-card block p-5"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">
                       <button
                         onClick={() => setDetailItem(item)}
-                        className="font-medium text-gray-900 truncate hover:text-indigo-600 transition text-left"
+                        className="font-medium text-gray-900 truncate hover:text-[#4285F4] transition text-left"
                       >
                         {item.targetUrl}
                       </button>
-                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${statusBadge.className}`}>
+                      <span className={`shrink-0 ${statusBadge.className}`}>
                         {statusBadge.label}
                       </span>
-                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${typeBadge.className}`}>
+                      <span className={`shrink-0 ${typeBadge.className}`}>
                         {typeBadge.label}
                       </span>
                     </div>
@@ -317,7 +316,7 @@ export default function HistoryPage() {
                   </div>
 
                   <div className="flex flex-col items-end gap-2">
-                    <div className={`shrink-0 w-16 h-16 rounded-xl ${scoreBg} ${scoreBorder} border-2 flex flex-col items-center justify-center`}>
+                    <div className={`shrink-0 gm-score-card ${item.overallScore == null ? 'gm-score-card--empty' : item.overallScore >= 80 ? 'gm-score-card--good' : item.overallScore >= 60 ? 'gm-score-card--warn' : 'gm-score-card--bad'} ${scoreBorder}`}>
                       <span className={`text-lg font-bold ${scoreColor}`}>{item.overallScore ?? '-'}</span>
                       <span className="text-[10px] text-gray-400">/100</span>
                     </div>
@@ -330,7 +329,7 @@ export default function HistoryPage() {
                 <div className="mt-4 flex items-center gap-3 border-t border-gray-100 pt-3">
                   <Link
                     to={`/report/${item.sessionId}`}
-                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition"
+                    className="gm-link text-sm"
                   >
                     {t('deepResearch.viewFullReport')} →
                   </Link>
@@ -359,9 +358,9 @@ export default function HistoryPage() {
               <button
                 key={page}
                 onClick={() => fetchHistory(page)}
-                className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
+                className={`w-8 h-8 rounded-full text-sm font-medium transition ${
                   page === data.pagination.page
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-[#4285F4] text-white'
                     : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                 }`}
               >
@@ -375,8 +374,8 @@ export default function HistoryPage() {
       {/* Detail Modal */}
       {detailItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setDetailItem(null)} />
-          <div className="relative bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[80vh] overflow-auto">
+          <div className="gm-modal-backdrop" onClick={() => setDetailItem(null)} />
+          <div className="gm-modal max-w-lg w-full max-h-[80vh] overflow-auto">
             <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">{t('history.detailTitle')}</h3>
               <button
@@ -450,7 +449,7 @@ export default function HistoryPage() {
                 <Link
                   to={`/report/${detailItem.sessionId}`}
                   onClick={() => setDetailItem(null)}
-                  className="block w-full text-center px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium"
+                  className="gm-btn gm-btn-primary w-full"
                 >
                   {t('deepResearch.viewFullReport')}
                 </Link>
@@ -463,8 +462,8 @@ export default function HistoryPage() {
       {/* Delete Confirmation Modal */}
       {deleteItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteItem(null)} />
-          <div className="relative bg-white rounded-xl shadow-xl max-w-sm w-full p-6">
+          <div className="gm-modal-backdrop" onClick={() => setDeleteItem(null)} />
+          <div className="gm-modal max-w-sm w-full p-6">
             <div className="text-center">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -476,14 +475,14 @@ export default function HistoryPage() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setDeleteItem(null)}
-                  className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                  className="gm-btn gm-btn-secondary flex-1"
                 >
                   {t('common.cancel')}
                 </button>
                 <button
                   onClick={() => handleDelete(deleteItem)}
                   disabled={deleteLoading === deleteItem.sessionId}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                  className="gm-btn gm-btn-danger flex-1"
                 >
                   {deleteLoading === deleteItem.sessionId ? '...' : t('history.delete')}
                 </button>
@@ -497,8 +496,8 @@ export default function HistoryPage() {
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
           <div
-            className={`px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium transition ${
-              toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+            className={`gm-toast transition ${
+              toast.type === 'success' ? 'gm-toast--success' : 'gm-toast--danger'
             }`}
           >
             {toast.message}

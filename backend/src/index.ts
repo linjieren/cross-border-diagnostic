@@ -1,6 +1,6 @@
 import { createApp } from "./app";
 
-const PORT = parseInt(process.env.PORT || "3000", 10);
+const PORT = parseInt(process.env.PORT || "3011", 10);
 
 async function main() {
   const app = await createApp();

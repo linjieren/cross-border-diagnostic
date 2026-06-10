@@ -1,0 +1,12 @@
+{
+  "name": "cross-border-diagnostic",
+  "private": true,
+  "scripts": {
+    "dev": "./scripts/dev-local.sh",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev -- --host 127.0.0.1 --port 5175",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "build:backend": "npm --prefix backend run build",
+    "build:frontend": "npm --prefix frontend run build"
+  }
+}

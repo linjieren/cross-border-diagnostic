@@ -151,6 +151,8 @@
     "proxyFailed": "プロキシに失敗しました",
     "screenshotFailed": "スクリーンショットに失敗しました",
     "internalError": "内部エラー",
+    "databaseUnavailable": "データベースサービスが起動していません",
+    "databaseUnavailableDetail": "現在、診断データベースに接続できません。ローカルのデータベースサービスを起動してから再試行してください。",
     "sessionIdRequired": "sessionIdが必要です",
     "urlAndSessionIdRequired": "urlおよびsessionIdが必要です",
     "reportGenerationFailed": "レポート生成に失敗しました",

@@ -48,8 +48,8 @@ docker compose up -d --build 2>/dev/null
 # 5. 健康检查
 echo "[5/5] 健康检查..."
 sleep 5
-BACKEND=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health || echo "000")
-FRONTEND=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/ || echo "000")
+BACKEND=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3011/health || echo "000")
+FRONTEND=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5175/ || echo "000")
 
 if [ "$BACKEND" = "200" ] && [ "$FRONTEND" = "200" ]; then
   echo "  全栈健康（backend:$BACKEND, frontend:$FRONTEND）"

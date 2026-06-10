@@ -151,6 +151,8 @@
     "proxyFailed": "프록시에 실패했습니다",
     "screenshotFailed": "스크린샷에 실패했습니다",
     "internalError": "내부 오류",
+    "databaseUnavailable": "데이터베이스 서비스가 시작되지 않았습니다",
+    "databaseUnavailableDetail": "현재 진단 데이터베이스에 연결할 수 없습니다. 로컬 데이터베이스 서비스를 시작한 뒤 다시 시도하세요.",
     "sessionIdRequired": "sessionId가 필요합니다",
     "urlAndSessionIdRequired": "url과 sessionId가 필요합니다",
     "reportGenerationFailed": "보고서 생성에 실패했습니다",

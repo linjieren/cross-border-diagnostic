@@ -4,8 +4,7 @@ export async function productContentTool(url: string): Promise<ToolResult> {
   return withPage(url, async (page) => {
     const findings: ToolResult["findings"] = [];
 
-    const result: any = await page.evaluate(`
-      (() => {
+    const result: any = await page.evaluate(() => {
         const text = document.body.innerText.toLowerCase();
         const html = document.body.innerHTML.toLowerCase();
 
@@ -32,14 +31,14 @@ export async function productContentTool(url: string): Promise<ToolResult> {
         const hasPricing = document.querySelectorAll('[class*="price"], [class*="pricing"]').length > 0 || /pricing|price|plan|套餐|价格/.test(text);
 
         // Video
-        const videoCount = document.querySelectorAll('video').length + Array.from(document.querySelectorAll('iframe[src]')).filter((i: any) => i.src.includes('youtube.com/embed')).length;
+        const videoCount = document.querySelectorAll('video').length + Array.from(document.querySelectorAll<HTMLIFrameElement>('iframe[src]')).filter((i) => i.src.includes('youtube.com/embed')).length;
 
         // Social proof
         const hasSocialProof = /★|☆|⭐|rating|review|star/.test(html) || document.querySelectorAll('[class*="review"], [class*="rating"]').length > 0;
 
         // Content matrix
-        const links = Array.from(document.querySelectorAll('a[href]')).map(a => ((a as any).href || '').toLowerCase());
-        const linkTexts = Array.from(document.querySelectorAll('a[href]')).map(a => ((a as any).textContent || '').toLowerCase());
+        const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href]')).map(a => (a.href || '').toLowerCase());
+        const linkTexts = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href]')).map(a => (a.textContent || '').toLowerCase());
         const hasBlog = links.some(h => /blog|news|articles/.test(h)) || linkTexts.some(t => /blog|news|articles/.test(t));
         const hasCaseStudy = links.some(h => /case study|success story|客户案例/.test(h)) || linkTexts.some(t => /case study|success story|客户案例/.test(t));
 
@@ -47,8 +46,7 @@ export async function productContentTool(url: string): Promise<ToolResult> {
           hasCert, hasTestimonials, hasSpecs, hasWorkingPrinciple, hasNumbers,
           hasFaq, hasPricing, videoCount, hasSocialProof, hasBlog, hasCaseStudy,
         };
-      })()
-    `);
+    });
 
     findings.push({ check: "合规认证", status: result.hasCert ? "pass" : "fail", detail: result.hasCert ? "页面包含合规认证信息" : "未检测到 CE/FCC/UL/RoHS/ISO 等合规认证信息" });
     findings.push({ check: "客户背书", status: result.hasTestimonials ? "pass" : "fail", detail: result.hasTestimonials ? "检测到客户评价或案例引用" : "未检测到客户评价、案例引用等背书内容" });

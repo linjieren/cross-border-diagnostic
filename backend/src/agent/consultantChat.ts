@@ -1,14 +1,18 @@
 import { callDeepSeek, DeepSeekMessage } from "./deepseek";
 import { prisma } from "../lib/prisma";
+import { buildTrustedSourcesPrompt, sanitizeTrustedLinks } from "./trustedSources";
 
 export type ChatIntent = "report_followup" | "general";
 
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  quotedText?: string;
 }
 
-export async function recognizeIntent(userMessage: string): Promise<ChatIntent> {
+export async function recognizeIntent(userMessage: string, quotedText?: string): Promise<ChatIntent> {
+  if (quotedText) return "report_followup";
+
   const messages: DeepSeekMessage[] = [
     {
       role: "system",
@@ -32,9 +36,10 @@ export async function chatWithConsultant(
   userMessage: string,
   history: ChatMessage[],
   reportMarkdown?: string,
-  language?: string
+  language?: string,
+  quotedText?: string
 ): Promise<{ reply: string; intent: ChatIntent; quotedText?: string }> {
-  const intent = await recognizeIntent(userMessage);
+  const intent = await recognizeIntent(userMessage, quotedText);
 
   const contextWindow = history.slice(-10);
   const lang = language || "zh-CN";
@@ -44,16 +49,51 @@ export async function chatWithConsultant(
     ? "Prefer to reply in English, but match the user's question language if they write in a different language."
     : "优先使用中文回复，但如果用户用其他语言提问，请灵活匹配用户的语言。";
 
-  let systemPrompt = `You are a senior cross-border e-commerce consultant. You are chatting with a client who has run a website diagnostic. Be helpful, concise, and professional.\n\n${languageInstruction}`;
+  let systemPrompt = `You are a senior cross-border e-commerce consultant. You are chatting with a founder or website owner who has run a cross-border website diagnostic. The user needs practical technical guidance first, with product, marketing, and conversion context as supporting explanation.
+
+${languageInstruction}
+
+Answer style:
+- Be concise and operational.
+- If the user asks how to fix something, use this structure: 结论 / 具体怎么做 / 怎么验证.
+- If the user asks why it matters, explain the business impact in plain language first, then mention the technical reason.
+- If the user asks something outside the diagnostic report, answer as supplemental guidance and clearly say it is not a confirmed finding from this diagnostic.
+- Do not ask the user to choose a role. Adapt depth automatically from the question.`;
+
+  systemPrompt += `
+
+Chat formatting rules:
+- Reply like a modern AI assistant chat, not like a formal report.
+- Use short paragraphs and flat Markdown bullet lists.
+- Avoid deeply nested lists, outline indentation, tables, and decorative separators.
+- When presenting priorities, comparisons, parameter sets, or summarized recommendations, prefer a Markdown table if it makes the answer easier to scan.
+- When giving steps, prefer 3-6 flat bullets. Do not rely on indentation to show hierarchy.
+- Write external references as Markdown links, for example [Cloudflare Turnstile docs](https://developers.cloudflare.com/turnstile/get-started/).
+- Keep code blocks only when code is necessary, and keep each code block as short as possible.
+- Do not use emoji or sticker-like symbols.`;
+
+  systemPrompt += buildTrustedSourcesPrompt();
 
   if (reportMarkdown && intent === "report_followup") {
     systemPrompt += `\n\nHere is the diagnostic report they are referring to:\n\n${reportMarkdown.slice(0, 4000)}\n\nBase your answers on this report. Quote specific findings when relevant.`;
   }
 
+  if (quotedText) {
+    systemPrompt += `\n\nThe user selected this exact report excerpt as context:\n"${quotedText}"\n\nUse it as the main context for the answer.`;
+  }
+
   const messages: DeepSeekMessage[] = [
     { role: "system", content: systemPrompt },
-    ...contextWindow.map((h) => ({ role: h.role, content: h.content }) as DeepSeekMessage),
-    { role: "user", content: userMessage },
+    ...contextWindow.map((h) => {
+      const content = h.quotedText
+        ? `${h.content}\n\n引用报告片段：${h.quotedText}`
+        : h.content;
+      return { role: h.role, content } as DeepSeekMessage;
+    }),
+    {
+      role: "user",
+      content: quotedText ? `${userMessage}\n\n引用报告片段：${quotedText}` : userMessage,
+    },
   ];
 
   const reply = await callDeepSeek({
@@ -62,10 +102,9 @@ export async function chatWithConsultant(
     maxTokens: 2048,
   });
 
-  const quoteMatch = reply.match(/"([^"]{10,200})"/);
-  const quotedText = quoteMatch ? quoteMatch[1] : undefined;
+  const sanitizedReply = await sanitizeTrustedLinks(reply);
 
-  return { reply, intent, quotedText };
+  return { reply: sanitizedReply, intent, quotedText };
 }
 
 export async function saveChatMessage(
@@ -92,5 +131,11 @@ export async function getChatHistory(sessionId: string): Promise<ChatMessage[]> 
     where: { sessionId },
     orderBy: { createdAt: "asc" },
   });
-  return rows.map((r) => ({ role: r.role as "user" | "assistant", content: r.message }));
+  return Promise.all(
+    rows.map(async (r) => ({
+      role: r.role as "user" | "assistant",
+      content: r.role === "assistant" ? await sanitizeTrustedLinks(r.message) : r.message,
+      quotedText: r.quotedText || undefined,
+    }))
+  );
 }
