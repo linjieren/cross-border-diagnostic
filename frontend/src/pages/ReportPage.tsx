@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback, type PointerEvent as ReactPointerEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, useRef, useCallback, type PointerEvent as ReactPointerEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
@@ -6,6 +6,15 @@ import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import Logo from '../components/Logo'
+import ScoreHero from '../components/report/ScoreHero'
+import TopIssues from '../components/report/TopIssues'
+import IssueCard from '../components/report/IssueCard'
+import {
+  MODULE_ANCHOR_TITLES,
+  MODULE_NAME_KEYS,
+  type ReportInsights,
+  type ReportIssue,
+} from '../components/report/types'
 
 /* ---------- helpers ---------- */
 
@@ -32,6 +41,7 @@ interface CachedReportPayload {
   reportMarkdown: string
   url?: string
   savedAt: string
+  insights?: ReportInsights | null
 }
 
 function getReportCacheKey(sessionId: string) {
@@ -48,6 +58,7 @@ function loadCachedReport(sessionId: string): CachedReportPayload | null {
       reportMarkdown: parsed.reportMarkdown,
       url: typeof parsed.url === 'string' ? parsed.url : '',
       savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : '',
+      insights: parsed.insights && typeof parsed.insights === 'object' ? parsed.insights : null,
     }
   } catch {
     return null
@@ -448,6 +459,7 @@ export default function ReportPage() {
   })
 
   const [report, setReport] = useState('')
+  const [insights, setInsights] = useState<ReportInsights | null>(null)
   const [targetUrl, setTargetUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -478,17 +490,53 @@ export default function ReportPage() {
   const [quotedText, setQuotedText] = useState('')
   const chatScrollRef = useRef<HTMLDivElement>(null)
   const reportParts = splitReportMarkdown(report)
-  const quickQuestions = quotedText
-    ? [
-        { label: '解释这段', message: '请解释我选中的这段报告内容，重点说清楚它为什么重要。' },
-        { label: '怎么修', message: '针对我选中的这段问题，请给出具体修复步骤。' },
-        { label: '怎么验证', message: '针对我选中的这段内容，请告诉我修改后怎么验证是否修好。' },
+
+  const moduleDisplayName = useCallback(
+    (moduleId: string) => {
+      const key = MODULE_NAME_KEYS[moduleId]
+      return key ? t(key) : moduleId
+    },
+    [t],
+  )
+
+  const quickQuestions = useMemo<{ label: string; message: string }[]>(() => {
+    if (quotedText) {
+      return [
+        { label: t('report.quickQuestions.explainQuote.label'), message: t('report.quickQuestions.explainQuote.message') },
+        { label: t('report.quickQuestions.fixQuote.label'), message: t('report.quickQuestions.fixQuote.message') },
+        { label: t('report.quickQuestions.verifyQuote.label'), message: t('report.quickQuestions.verifyQuote.message') },
       ]
-    : [
-        { label: '先改哪三项', message: '这份报告里我应该优先处理哪三项？请按影响和实施难度排序。' },
-        { label: '怎么验证修好', message: '如果我按报告修改网站，应该怎么重新验证这些问题是否已经解决？' },
-        { label: '技术执行顺序', message: '请把这份报告整理成技术侧优先执行顺序，越具体越好。' },
-      ]
+    }
+
+    const questions: { label: string; message: string }[] = []
+    const topIssue = insights?.topIssues?.[0]
+    if (topIssue?.check) {
+      questions.push({
+        label: t('report.quickQuestions.fixIssue.label', { issue: topIssue.check }),
+        message: t('report.quickQuestions.fixIssue.message', { issue: topIssue.check }),
+      })
+    }
+
+    const scoredModules = (insights?.modules || []).filter((m) => m.score != null)
+    const weakest = scoredModules.reduce<(typeof scoredModules)[number] | null>(
+      (min, m) => (min == null || (m.score ?? 101) < (min.score ?? 101) ? m : min),
+      null,
+    )
+    if (weakest) {
+      const name = moduleDisplayName(weakest.module)
+      questions.push({
+        label: t('report.quickQuestions.improveModule.label', { module: name }),
+        message: t('report.quickQuestions.improveModule.message', { module: name }),
+      })
+    }
+
+    questions.push(
+      { label: t('report.quickQuestions.prioritize.label'), message: t('report.quickQuestions.prioritize.message') },
+      { label: t('report.quickQuestions.verify.label'), message: t('report.quickQuestions.verify.message') },
+      { label: t('report.quickQuestions.techOrder.label'), message: t('report.quickQuestions.techOrder.message') },
+    )
+    return questions.slice(0, 6)
+  }, [quotedText, insights, t, moduleDisplayName])
 
   // Fetch report
   useEffect(() => {
@@ -505,10 +553,13 @@ export default function ReportPage() {
         if (cancelled) return
         setReport(normalizeReportMarkdown(data.reportMarkdown || ''))
         if (data.url) setTargetUrl(data.url)
+        const reportInsights = (data.insights as ReportInsights | undefined) ?? null
+        setInsights(reportInsights)
         saveCachedReport(sessionId, {
           reportMarkdown: data.reportMarkdown || '',
           url: data.url || '',
           savedAt: new Date().toISOString(),
+          insights: reportInsights,
         })
         setLoading(false)
       })
@@ -518,6 +569,7 @@ export default function ReportPage() {
         if (cached) {
           setReport(normalizeReportMarkdown(cached.reportMarkdown))
           if (cached.url) setTargetUrl(cached.url)
+          setInsights(cached.insights ?? null)
           setError('')
           setCacheNotice('当前正在显示本机缓存的报告快照。后端恢复后刷新页面即可同步最新版本。')
           setLoading(false)
@@ -626,6 +678,18 @@ export default function ReportPage() {
     window.history.replaceState(null, '', `#${encodeURIComponent(targetId)}`)
   }, [])
 
+  const scrollToModuleSection = useCallback((moduleId: string) => {
+    const anchorTitle = MODULE_ANCHOR_TITLES[moduleId]
+    const container = reportRef.current
+    if (!anchorTitle || !container) return
+
+    const target = Array.from(container.querySelectorAll<HTMLElement>('h2, h3'))
+      .find((node) => (node.textContent || '').trim().includes(anchorTitle))
+    if (!target) return
+
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+
   // Send chat message
   const sendMessage = useCallback(async (overrideMessage?: string) => {
     const messageText = (overrideMessage || input).trim()
@@ -670,6 +734,12 @@ export default function ReportPage() {
       setQuotedText('')
     }
   }, [sessionId, input, sending, quotedText, t])
+
+  const handleAskConsultant = useCallback((issue: ReportIssue) => {
+    if (!issue.check) return
+    setChatOpen(true)
+    void sendMessage(t('report.issueCard.askMessage', { issue: issue.check }))
+  }, [sendMessage, t])
 
   const downloadReportFile = useCallback(async (format: 'pdf' | 'html') => {
     if (!sessionId || downloadingFormat) return
@@ -831,7 +901,29 @@ export default function ReportPage() {
       return <h2 id={slugify(flattenText(children))}>{children}</h2>
     },
     h3({ children }: any) {
-      return <h3 id={slugify(flattenText(children))}>{children}</h3>
+      const text = flattenText(children).trim()
+      const moduleId = Object.keys(MODULE_ANCHOR_TITLES).find((id) =>
+        text.includes(MODULE_ANCHOR_TITLES[id]),
+      )
+      const moduleIssues =
+        moduleId && insights ? insights.issues.filter((issue) => issue.module === moduleId) : []
+
+      return (
+        <>
+          <h3 id={slugify(flattenText(children))}>{children}</h3>
+          {moduleIssues.length > 0 && (
+            <div className="issue-card-list">
+              {moduleIssues.map((issue, index) => (
+                <IssueCard
+                  key={`${issue.module}-${issue.check}-${index}`}
+                  issue={issue}
+                  onAskConsultant={handleAskConsultant}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )
     },
     p({ children }: any) {
       const text = flattenText(children).trim()
@@ -1146,6 +1238,21 @@ export default function ReportPage() {
 
                 {reportParts.metaLine && (
                   <p className="report-meta-bar">{reportParts.metaLine}</p>
+                )}
+
+                {insights && (
+                  <ScoreHero
+                    overallScore={insights.overallScore}
+                    modules={insights.modules}
+                    onModuleSelect={scrollToModuleSection}
+                  />
+                )}
+
+                {insights && insights.topIssues.length > 0 && (
+                  <TopIssues
+                    issues={insights.topIssues}
+                    onIssueSelect={(issue) => scrollToModuleSection(issue.module)}
+                  />
                 )}
 
                 {reportParts.toc && (

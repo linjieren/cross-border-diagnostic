@@ -1,4 +1,4 @@
-import { withPage } from "./tools/_helper";
+import { withPage, ToolResult } from "./tools/_helper";
 import { callDeepSeek, DeepSeekMessage } from "./deepseek";
 import { globalAccelerationTool } from "./tools/globalAccelerationTool";
 import { leadPageTool } from "./tools/leadPageTool";
@@ -113,12 +113,17 @@ export async function runAgentDiagnosis(
         understanding = { raw: understandingRaw };
       }
     } catch (err) {
-      if (!isMissingDeepSeekApiKey(err)) throw err;
+      // 任何 LLM 错误（缺 key、超时、5xx、网络故障等）都降级为规则识别，
+      // 不让瞬时故障杀死整个会话。错误原因记入日志和步骤事件。
+      const reason = err instanceof Error ? err.message : String(err);
+      console.warn(`Step 1 LLM call failed, falling back to rule-based inference: ${reason}`);
       understanding = inferProductUnderstanding(pageContent);
       emit({
         type: "step-think",
         step: 1,
-        payload: { message: "DEEPSEEK_API_KEY 未配置，已切换为规则识别模式。" },
+        payload: { message: isMissingDeepSeekApiKey(err)
+          ? "DEEPSEEK_API_KEY 未配置，已切换为规则识别模式。"
+          : "大模型调用失败，已切换为规则识别模式。" },
       });
     }
 
@@ -145,10 +150,10 @@ export async function runAgentDiagnosis(
     emit({ type: "step-think", step: 2, payload: { message: "Running diagnostic tools..." } });
 
     const [globalRes, leadRes, productRes, formRes] = await Promise.all([
-      globalAccelerationTool(url).catch((e: any) => ({ module: "global_acceleration", findings: [], error: e.message })),
-      leadPageTool(url).catch((e: any) => ({ module: "lead_page_check", findings: [], error: e.message })),
-      productContentTool(url).catch((e: any) => ({ module: "product_content_audit", findings: [], error: e.message })),
-      formTrackingTool(url).catch((e: any) => ({ module: "form_tracking", findings: [], error: e.message })),
+      globalAccelerationTool(url).catch((e: any): ToolResult => ({ module: "global_acceleration", findings: [], error: e.message })),
+      leadPageTool(url).catch((e: any): ToolResult => ({ module: "lead_page_check", findings: [], error: e.message })),
+      productContentTool(url).catch((e: any): ToolResult => ({ module: "product_content_audit", findings: [], error: e.message })),
+      formTrackingTool(url).catch((e: any): ToolResult => ({ module: "form_tracking", findings: [], error: e.message })),
     ]);
 
     const toolResults = [globalRes, leadRes, productRes, formRes];
@@ -218,7 +223,8 @@ export async function runAgentDiagnosis(
       where: { id: sessionId },
       data: { agentSteps: steps as any, status: "failed" },
     }).catch(() => {});
-    emit({ type: "error", payload: { message: err.message } });
+    // 不在此处 emit error：sessionRuntime 的 .catch 会统一 publish 一次，
+    // 双发会让客户端收到两条 error 事件。
     throw err;
   }
 }

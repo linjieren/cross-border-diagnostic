@@ -23,7 +23,7 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:devpass@db:5432/diagnostic
       PORT: 3000
-      JWT_SECRET: dev-jwt-secret-change-me-in-production
+      JWT_SECRET: dev-jwt-secret-change-me-in-production # 仅本地开发使用，禁止用于生产部署
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       DEEPSEEK_BASE_URL: https://api.deepseek.com
       DEEPSEEK_MODEL: deepseek-chat

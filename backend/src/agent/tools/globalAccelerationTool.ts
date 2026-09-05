@@ -1,20 +1,47 @@
 import { withPage, ToolResult } from "./_helper";
 
+// Server-side header fetch. Logic copied inline from the legacy
+// src/lib/modules/global-acceleration.ts getCdnHeaders (that module is being
+// removed; do not import it). A browser-side fetch with mode:"no-cors" returns
+// an opaque response whose headers are unreadable, so headers must be read
+// from a real Node-side request instead.
+async function getResponseHeaders(url: string): Promise<Record<string, string>> {
+  const collect = (resp: Response): Record<string, string> => {
+    const headers: Record<string, string> = {};
+    resp.headers.forEach((value, key) => {
+      headers[key.toLowerCase()] = value;
+    });
+    return headers;
+  };
+
+  for (const method of ["HEAD", "GET"] as const) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+      const resp = await fetch(url, {
+        method,
+        redirect: "follow",
+        signal: controller.signal,
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+        },
+      });
+      return collect(resp);
+    } catch {
+      // Some servers reject HEAD; fall through to GET, then give up.
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  return {};
+}
+
 export async function globalAccelerationTool(url: string): Promise<ToolResult> {
+  const cdnHeaders = await getResponseHeaders(url);
+
   return withPage(url, async (page) => {
     const findings: ToolResult["findings"] = [];
-
-    // CDN detection via headers
-    const cdnHeaders = await page.evaluate(async () => {
-      try {
-        const resp = await fetch(location.href, { method: "HEAD", mode: "no-cors" });
-        const h: Record<string, string> = {};
-        resp.headers.forEach((v, k) => { h[k.toLowerCase()] = v; });
-        return h;
-      } catch {
-        return {} as Record<string, string>;
-      }
-    });
 
     const lowerHeaders: Record<string, string> = {};
     for (const [k, v] of Object.entries(cdnHeaders)) {

@@ -47,6 +47,105 @@
     "preview": "网站预览",
     "generating": "生成中..."
   },
+  "thinking": {
+    "workbenchTitle": "诊断工作台",
+    "workbenchSubtitle": "全方位检查网站技术基础、转化体验和追踪能力",
+    "statusDone": "报告已生成",
+    "statusRetry": "需要重试",
+    "statusDiagnosing": "后台诊断中",
+    "statusGenerating": "后台生成中",
+    "preview": "网站预览",
+    "heroTitle": "正在生成网站诊断报告",
+    "backHome": "返回首页",
+    "reportReady": "完整报告已准备好",
+    "etaTotal": "预计 1-3 分钟完成",
+    "introBubble": "我会按阶段检查这个网站，并把结论整理成一份可执行的诊断报告。正在检查的阶段会自动展开实时进展，你也可以随时点开任意阶段查看详情。",
+    "issueCount": "{{count}} 个关注项",
+    "collapse": "收起",
+    "expand": "展开",
+    "reportGeneratedTitle": "诊断报告已生成",
+    "reportGeneratedBody": "完整报告已准备好，进入报告页查看问题、影响、修复步骤和验证方式。",
+    "viewReport": "查看完整报告",
+    "retry": "重试",
+    "runningHint": "正在检查，完成后会自动更新结论。",
+    "waiting": "等待开始",
+    "phaseStatus": {
+      "done": "已完成",
+      "running": "检查中",
+      "failed": "需要处理",
+      "queued": "待开始"
+    },
+    "findingStatus": {
+      "pass": "通过",
+      "warn": "需优化",
+      "fail": "未通过",
+      "pending": "待确认"
+    },
+    "moduleError": "检查遇到问题：{{error}}",
+    "moduleDoneNoDetails": "检查完成，暂无可展示细节",
+    "moduleDoneNoIssues": "检查完成，未发现关键阻碍",
+    "moduleDoneIssues": "检查完成，发现 {{count}} 个需要关注的问题",
+    "moduleErrorDetail": "自动检查未能完成。建议先查看完整报告中的人工复核建议，或重新发起一次诊断。",
+    "checkItem": "检测项",
+    "noDetail": "暂无详情",
+    "findingLine": "{{label}}：{{check}}。{{detail}}",
+    "runningPositioning": "正在识别网站定位和产品表达",
+    "positioningDone": "网站定位识别完成",
+    "syncChecking": "正在同步检查",
+    "modulesDone": "模块检查完成",
+    "preparingReport": "正在整理完整诊断报告",
+    "defaultReportTitle": "诊断报告",
+    "basicUnderstanding": "已完成网站基础理解",
+    "initialVerdict": "初步判断：{{productType}}",
+    "productType": "产品类型：{{productType}}",
+    "targetAudience": "目标受众：{{value}}",
+    "targetAudienceUnknown": "目标受众：需要结合报告进一步确认",
+    "valueProposition": "价值主张：{{value}}",
+    "valuePropositionPending": "价值主张：已进入报告生成阶段综合判断",
+    "reportContentReady": "报告内容已整理完成",
+    "reportGeneratedDetail": "已生成完整诊断报告，包含问题影响、修复步骤、验证方式和参考资料。",
+    "streamError": "诊断过程中遇到问题，请重试",
+    "phaseFailed": "当前阶段未能完成",
+    "backgroundFailed": "后台诊断未能完成，请重试",
+    "phases": {
+      "positioning": {
+        "title": "识别网站定位",
+        "scope": "读取页面标题、核心文案和产品表达",
+        "eta": "约 10-20 秒",
+        "detail": "会先判断网站卖什么、面向谁、当前价值主张是否清晰。"
+      },
+      "technical": {
+        "title": "检查访问速度与技术基础",
+        "scope": "CDN、TTFB、HTTP/2/3、图片与缓存",
+        "eta": "约 20-40 秒",
+        "detail": "重点检查跨境访问速度和基础性能是否会影响广告流量承接。"
+      },
+      "landing": {
+        "title": "检查落地页信任与转化",
+        "scope": "表单安全、信任元素、跳转与留资体验",
+        "eta": "约 20-40 秒",
+        "detail": "重点判断用户进站后是否愿意继续了解、咨询或提交线索。"
+      },
+      "content": {
+        "title": "检查产品内容完整度",
+        "scope": "产品描述、图片、视频、参数、场景与本地化",
+        "eta": "约 20-40 秒",
+        "detail": "重点检查产品页是否足够支撑海外用户理解和信任。"
+      },
+      "tracking": {
+        "title": "检查表单和广告追踪",
+        "scope": "GA4、广告像素、转化事件与 Cookie 合规",
+        "eta": "约 20-40 秒",
+        "detail": "重点检查投放效果是否可衡量，表单线索是否能被正确追踪。"
+      },
+      "report": {
+        "title": "生成诊断报告",
+        "scope": "整理问题、影响、修复步骤和验证方式",
+        "eta": "约 20-60 秒",
+        "detail": "报告会保留完整操作指南，方便你按步骤修改后重新检测。"
+      }
+    }
+  },
   "diagnosis": {
     "statusAnalyzing": "分析中",
     "statusCompleted": "已完成",
@@ -80,7 +179,18 @@
     "pagesDetected": "检测页面",
     "typeLegacy": "规则扫描",
     "typeAgent": "AI 诊断",
-    "reportSummary": "报告摘要"
+    "reportSummary": "报告摘要",
+    "groupDiagnosisCount": "{{count}} 次诊断",
+    "vsPrevious": "较上次",
+    "compare": "对比",
+    "compareTitle": "重测对比",
+    "compareBaseline": "基线（较早）",
+    "compareCurrent": "本次（较新）",
+    "compareOverall": "综合评分",
+    "compareDelta": "分差",
+    "retest": "重新诊断",
+    "retestFailed": "创建重新诊断失败",
+    "loadMore": "加载更多"
   },
   "login": {
     "titleInput": "登录 / 注册",
@@ -171,6 +281,55 @@
     "chatError": "发送失败",
     "chatEmptyReply": "（无回复）",
     "quoting": "引用",
+    "scoreHero": {
+      "title": "综合评分",
+      "moduleScores": "模块评分"
+    },
+    "topIssuesThisWeek": "本周该做的 3 件事",
+    "issueSeverity": {
+      "fail": "严重",
+      "warn": "待优化"
+    },
+    "issueCard": {
+      "problemLabel": "问题：",
+      "evidenceLabel": "检测证据：",
+      "askConsultant": "问顾问怎么修",
+      "askMessage": "报告中提到的「{{issue}}」问题应该怎么优先修复？请给出具体修复步骤和验证方式。"
+    },
+    "quickQuestions": {
+      "prioritize": {
+        "label": "先改哪三项",
+        "message": "这份报告里我应该优先处理哪三项？请按影响和实施难度排序。"
+      },
+      "verify": {
+        "label": "怎么验证修好",
+        "message": "如果我按报告修改网站，应该怎么重新验证这些问题是否已经解决？"
+      },
+      "techOrder": {
+        "label": "技术执行顺序",
+        "message": "请把这份报告整理成技术侧优先执行顺序，越具体越好。"
+      },
+      "improveModule": {
+        "label": "提升{{module}}",
+        "message": "如何提升「{{module}}」模块的分数？请给出具体可执行的优化清单。"
+      },
+      "fixIssue": {
+        "label": "修复「{{issue}}」",
+        "message": "报告中提到的「{{issue}}」问题应该怎么优先修复？请给出具体修复步骤和预期效果。"
+      },
+      "explainQuote": {
+        "label": "解释这段",
+        "message": "请解释我选中的这段报告内容，重点说清楚它为什么重要。"
+      },
+      "fixQuote": {
+        "label": "怎么修",
+        "message": "针对我选中的这段问题，请给出具体修复步骤。"
+      },
+      "verifyQuote": {
+        "label": "怎么验证",
+        "message": "针对我选中的这段内容，请告诉我修改后怎么验证是否修好。"
+      }
+    },
     "status": "状态",
     "score": "评分",
     "roi": "预计",

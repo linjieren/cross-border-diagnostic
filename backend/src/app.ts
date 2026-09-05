@@ -30,6 +30,13 @@ export async function createApp(): Promise<express.Application> {
   app.use("/screenshots", express.static(path.join(process.cwd(), "diagnostic/screenshots")));
   app.use("/reports", express.static(path.join(process.cwd(), "diagnostic/reports")));
 
+  // SSE（/api/agent 的 text/event-stream）经 nginx 反代时禁止缓冲；
+  // X-Accel-Buffering 由后端设置，避免改动 routes/agent.ts
+  app.use("/api/agent", (req, res, next) => {
+    res.setHeader("X-Accel-Buffering", "no");
+    next();
+  });
+
   app.use("/health", healthRouter);
   app.use("/api/feedback", feedbackRouter);
   app.use("/api/diagnostic", diagnosticRouter);

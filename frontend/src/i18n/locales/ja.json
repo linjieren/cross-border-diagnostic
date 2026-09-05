@@ -47,6 +47,105 @@
     "preview": "ウェブサイトプレビュー",
     "generating": "生成中..."
   },
+  "thinking": {
+    "workbenchTitle": "診断ワークベンチ",
+    "workbenchSubtitle": "サイトの技術基盤、コンバージョン体験、トラッキング能力を総合的にチェック",
+    "statusDone": "レポート生成済み",
+    "statusRetry": "再試行が必要",
+    "statusDiagnosing": "バックグラウンドで診断中",
+    "statusGenerating": "バックグラウンドで生成中",
+    "preview": "サイトプレビュー",
+    "heroTitle": "サイト診断レポートを生成中",
+    "backHome": "ホームに戻る",
+    "reportReady": "完全なレポートの準備ができました",
+    "etaTotal": "所要時間の目安 1〜3分",
+    "introBubble": "このサイトを段階的にチェックし、結果を実行可能な診断レポートにまとめます。チェック中のステージは自動的に展開されて進捗が表示され、いつでも任意のステージを開いて詳細を確認できます。",
+    "issueCount": "要注意項目 {{count}} 件",
+    "collapse": "折りたたむ",
+    "expand": "展開",
+    "reportGeneratedTitle": "診断レポートが生成されました",
+    "reportGeneratedBody": "完全なレポートの準備ができました。レポートページで問題、影響、修正手順、検証方法を確認してください。",
+    "viewReport": "完全なレポートを見る",
+    "retry": "再試行",
+    "runningHint": "チェック中です。完了すると結果が自動的に更新されます。",
+    "waiting": "開始待ち",
+    "phaseStatus": {
+      "done": "完了",
+      "running": "チェック中",
+      "failed": "対応が必要",
+      "queued": "未開始"
+    },
+    "findingStatus": {
+      "pass": "合格",
+      "warn": "要改善",
+      "fail": "不合格",
+      "pending": "未確認"
+    },
+    "moduleError": "チェックで問題が発生しました：{{error}}",
+    "moduleDoneNoDetails": "チェック完了。表示できる詳細はありません",
+    "moduleDoneNoIssues": "チェック完了。重大な阻害要因は見つかりませんでした",
+    "moduleDoneIssues": "チェック完了。対応が必要な問題が {{count}} 件見つかりました",
+    "moduleErrorDetail": "自動チェックを完了できませんでした。完全なレポートにある手動確認の提案をご覧になるか、診断を再実行してください。",
+    "checkItem": "チェック項目",
+    "noDetail": "詳細なし",
+    "findingLine": "{{label}}：{{check}}。{{detail}}",
+    "runningPositioning": "サイトのポジショニングとプロダクト表現を識別中",
+    "positioningDone": "サイトのポジショニング識別が完了",
+    "syncChecking": "並行チェック中",
+    "modulesDone": "モジュールチェック完了",
+    "preparingReport": "完全な診断レポートを整理中",
+    "defaultReportTitle": "診断レポート",
+    "basicUnderstanding": "サイトの基本理解が完了",
+    "initialVerdict": "初期判断：{{productType}}",
+    "productType": "プロダクトタイプ：{{productType}}",
+    "targetAudience": "ターゲット層：{{value}}",
+    "targetAudienceUnknown": "ターゲット層：レポートでさらに確認が必要",
+    "valueProposition": "価値提案：{{value}}",
+    "valuePropositionPending": "価値提案：レポート生成段階で総合判断",
+    "reportContentReady": "レポート内容の整理が完了",
+    "reportGeneratedDetail": "問題の影響、修正手順、検証方法、参考資料を含む完全な診断レポートが生成されました。",
+    "streamError": "診断中に問題が発生しました。再試行してください",
+    "phaseFailed": "現在のステージを完了できませんでした",
+    "backgroundFailed": "バックグラウンド診断を完了できませんでした。再試行してください",
+    "phases": {
+      "positioning": {
+        "title": "サイトのポジショニングを識別",
+        "scope": "ページタイトル、主要コピー、プロダクト表現を読み取り",
+        "eta": "約10〜20秒",
+        "detail": "まずサイトが何を売り、誰向けで、価値提案が明確かを判断します。"
+      },
+      "technical": {
+        "title": "アクセス速度と技術基盤をチェック",
+        "scope": "CDN、TTFB、HTTP/2/3、画像とキャッシュ",
+        "eta": "約20〜40秒",
+        "detail": "越境アクセス速度と基本性能が広告トラフィックの受け入れに影響しないかを重点的にチェックします。"
+      },
+      "landing": {
+        "title": "ランディングページの信頼性とコンバージョンをチェック",
+        "scope": "フォームの安全性、信頼要素、遷移とリード獲得体験",
+        "eta": "約20〜40秒",
+        "detail": "訪問者がサイト内で継続的に情報収集、問い合わせ、リード送信を行うかを重点的に判断します。"
+      },
+      "content": {
+        "title": "プロダクトコンテンツの充実度をチェック",
+        "scope": "プロダクト説明、画像、動画、仕様、利用シーン、ローカライズ",
+        "eta": "約20〜40秒",
+        "detail": "プロダクトページが海外ユーザーの理解と信頼を十分に支えているかを重点的にチェックします。"
+      },
+      "tracking": {
+        "title": "フォームと広告トラッキングをチェック",
+        "scope": "GA4、広告ピクセル、コンバージョンイベント、Cookieコンプライアンス",
+        "eta": "約20〜40秒",
+        "detail": "広告効果が測定可能か、フォームのリードが正しくトラッキングされるかを重点的にチェックします。"
+      },
+      "report": {
+        "title": "診断レポートを生成",
+        "scope": "問題、影響、修正手順、検証方法を整理",
+        "eta": "約20〜60秒",
+        "detail": "レポートには完全な操作ガイドが残るため、手順どおりに修正して再チェックできます。"
+      }
+    }
+  },
   "diagnosis": {
     "statusAnalyzing": "分析中",
     "statusCompleted": "完了",
@@ -77,7 +176,18 @@
     "scoreGood": "良好",
     "scoreNeedsImprovement": "改善が必要",
     "scanDuration": "所要時間",
-    "pagesDetected": "検出されたページ"
+    "pagesDetected": "検出されたページ",
+    "groupDiagnosisCount": "{{count}} 回の診断",
+    "vsPrevious": "前回比",
+    "compare": "比較",
+    "compareTitle": "再診断の比較",
+    "compareBaseline": "ベースライン（以前）",
+    "compareCurrent": "今回（最新）",
+    "compareOverall": "総合スコア",
+    "compareDelta": "差分",
+    "retest": "再診断",
+    "retestFailed": "再診断の作成に失敗しました",
+    "loadMore": "さらに読み込む"
   },
   "login": {
     "titleInput": "ログイン / 登録",
@@ -214,6 +324,55 @@
       "high": "このモジュールには改善の余地があり、短期間で最適化することをお勧めします。",
       "medium": "このモジュールは良好に機能しており、細部の改善が可能です。",
       "low": "このモジュールは優秀に機能しており、現在の戦略を維持してください。"
+    },
+    "scoreHero": {
+      "title": "総合スコア",
+      "moduleScores": "モジュール別スコア"
+    },
+    "topIssuesThisWeek": "今週やるべき3つのこと",
+    "issueSeverity": {
+      "fail": "重大",
+      "warn": "要改善"
+    },
+    "issueCard": {
+      "problemLabel": "問題：",
+      "evidenceLabel": "検出エビデンス：",
+      "askConsultant": "コンサルタントに修正方法を聞く",
+      "askMessage": "レポートに記載された「{{issue}}」の問題を優先的に修正するにはどうすればよいですか？具体的な修正手順と検証方法を教えてください。"
+    },
+    "quickQuestions": {
+      "prioritize": {
+        "label": "優先する3項目",
+        "message": "このレポートで最初に対処すべき3つの項目はどれですか？影響と実装難易度で順位付けしてください。"
+      },
+      "verify": {
+        "label": "修正の検証方法",
+        "message": "レポート通りにサイトを修正した場合、これらの問題が解決したかどうかをどう再検証すればよいですか？"
+      },
+      "techOrder": {
+        "label": "技術的な実行順序",
+        "message": "このレポートを技術側の優先実行順序にまとめてください。できるだけ具体的にお願いします。"
+      },
+      "improveModule": {
+        "label": "{{module}}を改善",
+        "message": "「{{module}}」モジュールのスコアを上げるにはどうすればよいですか？具体的で実行可能なチェックリストを教えてください。"
+      },
+      "fixIssue": {
+        "label": "「{{issue}}」を修正",
+        "message": "レポートに記載された「{{issue}}」の問題を優先的に修正するにはどうすればよいですか？具体的な手順と期待される効果を教えてください。"
+      },
+      "explainQuote": {
+        "label": "この部分を説明",
+        "message": "選択したレポートの部分を説明してください。なぜ重要なのかを重点的にお願いします。"
+      },
+      "fixQuote": {
+        "label": "修正方法",
+        "message": "選択した問題について、具体的な修正手順を教えてください。"
+      },
+      "verifyQuote": {
+        "label": "検証方法",
+        "message": "選択した内容について、修正後に直ったかどうかをどう検証すればよいか教えてください。"
+      }
     }
   },
   "market": {

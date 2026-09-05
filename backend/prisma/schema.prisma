@@ -75,6 +75,8 @@ model DiagnosticSession {
   pages DiagnosticPage[]
   chats ConsultantChat[]
 
+  @@index([userId])
+  @@index([status])
   @@map("diagnostic_sessions")
 }
 
@@ -95,6 +97,7 @@ model DiagnosticPage {
   session  DiagnosticSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   results  DiagnosticResult[]
 
+  @@index([sessionId])
   @@map("diagnostic_pages")
 }
 
@@ -112,6 +115,7 @@ model DiagnosticResult {
 
   page DiagnosticPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
 
+  @@index([pageId])
   @@map("diagnostic_results")
 }
 
@@ -127,5 +131,6 @@ model ConsultantChat {
 
   session DiagnosticSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
+  @@index([sessionId])
   @@map("consultant_chats")
 }

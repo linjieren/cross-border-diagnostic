@@ -1,4 +1,5 @@
 import { callDeepSeek, DeepSeekMessage } from "./deepseek";
+import { moduleScore } from "./scoring";
 import MarkdownIt from "markdown-it";
 
 function removeInlineCode(markdown: string): string {
@@ -223,20 +224,6 @@ function moduleTitle(module?: string): string {
   return module || "诊断模块";
 }
 
-function moduleScore(result: any): number {
-  const findings = Array.isArray(result?.findings) ? result.findings : [];
-  if (result?.error) return 45;
-  if (!findings.length) return 60;
-
-  const total = findings.reduce((sum: number, finding: any) => {
-    if (finding?.status === "pass") return sum + 100;
-    if (finding?.status === "warn") return sum + 65;
-    if (finding?.status === "fail") return sum + 35;
-    return sum + 55;
-  }, 0);
-  return Math.round(total / findings.length);
-}
-
 function businessLens(module?: string): string {
   if (module === "global_acceleration") {
     return "重点解释跨境首屏速度、广告落地页跳出率、移动端加载体验和海外访问稳定性。";
@@ -282,29 +269,11 @@ function supplementalMaterials(result: any) {
 
   if (module === "global_acceleration" && hasFinding(result, ["CDN", "HTTP", "缓存", "图片", "首字节"])) {
     return {
-      codeBlocks: [
-        {
-          label: "Cloudflare CDN 基础部署",
-          language: "html",
-          code: `<!-- Cloudflare CDN 部署代码 -->
-<!-- 将以下 <script> 标签粘贴到网站 <head> 标签内 -->
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js"
-  data-cf-beacon='{"token": "YOUR_CLOUDFLARE_TOKEN"}'>
-</script>
-
-<!--
-部署步骤：
-1. 在 cloudflare.com 注册账号
-2. 添加你的域名，系统会自动扫描现有 DNS 记录
-3. 将域名 DNS 服务器修改为 Cloudflare 分配的 NS 地址
-4. 等待 DNS 生效（通常 5-30 分钟）
-5. 在 SSL/TLS 选项卡中启用 Full 加密模式
-6. 在 Speed 选项卡中启用 Auto Minify (JS/CSS/HTML)
--->`,
-        },
-      ],
+      // CDN 接入依赖 DNS/NS 切换等配置操作，没有可直接粘贴的部署代码，
+      // 这里只给出指引资源，不再注入与本目的无关的统计脚本。
+      codeBlocks: [],
       resources: [
-        { title: "Cloudflare CDN setup tutorial", url: "https://www.youtube.com/results?search_query=Cloudflare+CDN+setup+tutorial" },
+        { title: "Cloudflare 官方接入指南（NS 切换开启 CDN）", url: "https://developers.cloudflare.com/fundamentals/setup/manage-domains/add-site/" },
         { title: "Cloudflare cache rules documentation", url: "https://developers.cloudflare.com/cache/how-to/cache-rules/" },
         { title: "HTTP/2 and HTTP/3 website optimization", url: "https://www.youtube.com/results?search_query=HTTP%2F2+HTTP%2F3+website+optimization" },
       ],
@@ -1056,8 +1025,7 @@ export interface ReportOutput {
 }
 
 export async function generateReport(
-  input: ReportInput,
-  onChunk?: (chunk: string) => void
+  input: ReportInput
 ): Promise<ReportOutput> {
   const { url, targetMarket, understanding, toolResults, language } = input;
   const lang = language || "zh-CN";
@@ -1237,31 +1205,28 @@ Generate the complete diagnostic report now. Start directly with the H1 title. F
 
   let markdown: string;
   try {
-    if (onChunk) {
-      markdown = await callDeepSeek(
-        {
-          messages,
-          temperature: 0.4,
-          maxTokens: 8192,
-          stream: true,
-        },
-        onChunk
-      );
-    } else {
-      markdown = await callDeepSeek({
-        messages,
-        temperature: 0.4,
-        maxTokens: 8192,
-      });
-    }
+    // 8192 token 非流式生成耗时长，默认 60s 不够，这里给 150s
+    markdown = await callDeepSeek({
+      messages,
+      temperature: 0.4,
+      maxTokens: 8192,
+      timeoutMs: 150000,
+    });
   } catch (err) {
-    if (isMissingDeepSeekApiKey(err)) {
-      return generateFallbackReport(input, "DEEPSEEK_API_KEY 未配置");
-    }
-    throw err;
+    // 任何 LLM 错误都降级为规则版报告，不让瞬时故障杀死整个诊断会话
+    const reason = err instanceof Error ? err.message : String(err);
+    console.warn(`Report generation LLM call failed, using fallback report: ${reason}`);
+    return generateFallbackReport(
+      input,
+      isMissingDeepSeekApiKey(err) ? "DEEPSEEK_API_KEY 未配置" : `大模型调用失败：${reason}`
+    );
   }
 
-  markdown = await polishReportDraft(markdown, input, moduleDigest, reportTitle);
+  // polish 是一次额外的全量改写调用，会让 LLM 成本翻倍。
+  // 可通过 REPORT_POLISH_ENABLED=false 关闭（默认开启），失败时静默返回原 draft。
+  if (process.env.REPORT_POLISH_ENABLED !== "false") {
+    markdown = await polishReportDraft(markdown, input, moduleDigest, reportTitle);
+  }
   markdown = normalizeHeadingSpacing(markdown);
   markdown = removeInlineCode(markdown);
   markdown = normalizeReportTitle(markdown, reportTitle);

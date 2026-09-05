@@ -32,6 +32,7 @@ services:
       - DATABASE_URL=postgresql://${DB_USER:-app}:${DB_PASSWORD:-app}@db:5432/${DB_NAME:-app}
       - REDIS_URL=redis://redis:6379
       - PORT=${BACKEND_PORT:-3000}
+      # 默认值仅供本地开发/测试兜底；生产部署（docker-compose.main.yml）要求显式提供 JWT_SECRET，缺失即启动失败
       - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret-change-in-production}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - DEEPSEEK_BASE_URL=https://api.deepseek.com

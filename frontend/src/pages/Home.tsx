@@ -3,6 +3,23 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Logo from '../components/Logo'
 
+function toApiErrorMessage(value: unknown, fallback: string): string {
+  if (!value || typeof value !== 'object') return toErrorMessage(value, fallback)
+
+  const record = value as Record<string, unknown>
+  const error = typeof record.error === 'string' ? record.error.trim() : ''
+  const detail = typeof record.detail === 'string' ? record.detail.trim() : ''
+  const message = typeof record.message === 'string' ? record.message.trim() : ''
+
+  if (error && detail) return `${error} - ${detail}`
+  if (error) return error
+  if (message && detail) return `${message} - ${detail}`
+  if (message) return message
+  if (detail) return detail
+
+  return fallback
+}
+
 function toErrorMessage(value: unknown, fallback: string): string {
   if (!value) return fallback
   if (typeof value === 'string') return value
@@ -80,7 +97,7 @@ export default function Home() {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(toErrorMessage(data, t('home.errorCreateSession')))
+        throw new Error(toApiErrorMessage(data, t('home.errorCreateSession')))
       }
       const session = await res.json()
       navigate(`/thinking/${session.sessionId}`)
@@ -92,33 +109,33 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="gm-shell flex items-center justify-center px-4">
       <div className="w-full max-w-lg">
         <div className="text-center mb-10">
           <div className="flex items-center justify-center mb-3">
             <Logo size="lg" />
           </div>
-          <p className="text-gray-500">{t('home.subtitle')}</p>
+          <p className="gm-body-copy">{t('home.subtitle')}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="gm-panel p-8 space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t('home.urlLabel')}</label>
+            <label className="block text-sm font-medium mb-2">{t('home.urlLabel')}</label>
             <input
               type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder={t('home.urlPlaceholder')}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+              className="gm-input"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t('home.marketLabel')}</label>
+            <label className="block text-sm font-medium mb-2">{t('home.marketLabel')}</label>
             <select
               value={targetMarket}
               onChange={(e) => setTargetMarket(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white"
+              className="gm-input"
             >
               <option value="">{t('home.marketPlaceholder')}</option>
               {markets.map((m) => (
@@ -130,19 +147,28 @@ export default function Home() {
           </div>
 
           {error && (
-            <div className="text-red-600 text-sm bg-red-50 px-4 py-2 rounded-lg">{error}</div>
+            <div
+              className="text-sm px-4 py-2"
+              style={{
+                color: '#b3261e',
+                background: 'rgba(234, 67, 53, 0.08)',
+                borderRadius: 'var(--gm-radius-sm)',
+              }}
+            >
+              {error}
+            </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-medium rounded-lg transition"
+            className="gm-btn gm-btn-primary w-full"
           >
             {loading ? t('common.loading') : t('home.startButton')}
           </button>
         </form>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
+        <p className="gm-meta-copy text-center mt-6">
           {t('home.platformsNote')}
         </p>
       </div>

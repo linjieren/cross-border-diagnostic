@@ -21,14 +21,21 @@ export async function recognizeIntent(userMessage: string, quotedText?: string):
     { role: "user", content: userMessage },
   ];
 
-  const res = await callDeepSeek({
-    messages,
-    temperature: 0.2,
-    maxTokens: 16,
-  });
+  try {
+    const res = await callDeepSeek({
+      messages,
+      temperature: 0.2,
+      maxTokens: 16,
+    });
 
-  const intent = res.trim().toLowerCase();
-  return intent.includes("report") ? "report_followup" : "general";
+    const intent = res.trim().toLowerCase();
+    return intent.includes("report") ? "report_followup" : "general";
+  } catch (err) {
+    // 意图分类失败时默认按 report_followup 处理，让聊天继续，
+    // 不把分类器的瞬时故障冒泡成 500
+    console.warn("Intent recognition failed, defaulting to report_followup:", err instanceof Error ? err.message : err);
+    return "report_followup";
+  }
 }
 
 export async function chatWithConsultant(

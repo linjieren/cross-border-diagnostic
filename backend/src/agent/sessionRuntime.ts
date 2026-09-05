@@ -6,6 +6,11 @@ type SessionListener = (event: AgentEvent) => void;
 const sessionListeners = new Map<string, Set<SessionListener>>();
 const sessionEventHistory = new Map<string, AgentEvent[]>();
 const runningSessions = new Map<string, Promise<void>>();
+const historyCleanupTimers = new Map<string, NodeJS.Timeout>();
+
+// 终态事件后保留历史 60s，供刚断线的客户端重连重放；之后清理，避免长跑进程内存单调增长
+const TERMINAL_HISTORY_TTL_MS = 60000;
+const TERMINAL_EVENT_TYPES = new Set<AgentEvent["type"]>(["report-complete", "error"]);
 
 function rememberEvent(sessionId: string, event: AgentEvent) {
   const history = sessionEventHistory.get(sessionId) || [];
@@ -16,12 +21,27 @@ function rememberEvent(sessionId: string, event: AgentEvent) {
   sessionEventHistory.set(sessionId, history);
 }
 
+function scheduleHistoryCleanup(sessionId: string) {
+  if (historyCleanupTimers.has(sessionId)) return;
+  const timer = setTimeout(() => {
+    historyCleanupTimers.delete(sessionId);
+    sessionEventHistory.delete(sessionId);
+    sessionListeners.delete(sessionId);
+  }, TERMINAL_HISTORY_TTL_MS);
+  if (typeof timer.unref === "function") timer.unref();
+  historyCleanupTimers.set(sessionId, timer);
+}
+
 export function publishSessionEvent(sessionId: string, event: AgentEvent) {
   rememberEvent(sessionId, event);
   const listeners = sessionListeners.get(sessionId);
-  if (!listeners) return;
-  for (const listener of listeners) {
-    listener(event);
+  if (listeners) {
+    for (const listener of listeners) {
+      listener(event);
+    }
+  }
+  if (TERMINAL_EVENT_TYPES.has(event.type)) {
+    scheduleHistoryCleanup(sessionId);
   }
 }
 
@@ -49,6 +69,12 @@ export function isSessionDiagnosisRunning(sessionId: string): boolean {
 }
 
 function clearSessionHistory(sessionId: string) {
+  // 会话重新开始时取消可能存在的终态清理定时器，防止新一轮历史被误删
+  const pending = historyCleanupTimers.get(sessionId);
+  if (pending) {
+    clearTimeout(pending);
+    historyCleanupTimers.delete(sessionId);
+  }
   sessionEventHistory.delete(sessionId);
 }
 

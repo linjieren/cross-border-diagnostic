@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { useAuth } from '../context/AuthContext'
 
 interface HistoryItem {
@@ -29,6 +30,20 @@ interface HistoryResponse {
     totalPages: number
   }
 }
+
+interface HistoryGroup {
+  url: string
+  items: HistoryItem[]
+}
+
+const MODULE_ORDER = [
+  'global_acceleration',
+  'lead_page_check',
+  'product_content_audit',
+  'form_tracking',
+]
+
+const PAGE_SIZE = 50
 
 function getScoreColor(score: number | null): string {
   if (score == null) return 'text-gray-400'
@@ -92,6 +107,32 @@ function getTypeBadge(t: (key: string) => string, type?: string): { label: strin
   }
 }
 
+function scoreDelta(current: number | null, previous: number | null): number | null {
+  if (current == null || previous == null) return null
+  return current - previous
+}
+
+function DeltaBadge({ delta }: { delta: number | null }) {
+  if (delta == null) return <span className="text-xs text-gray-300">-</span>
+  if (delta > 0) return <span className="gm-trend gm-trend--up">↑ +{delta}</span>
+  if (delta < 0) return <span className="gm-trend gm-trend--down">↓ {delta}</span>
+  return <span className="gm-trend gm-trend--flat">→ 0</span>
+}
+
+function getModuleScores(item: HistoryItem): Map<string, number> {
+  const acc = new Map<string, { sum: number; count: number }>()
+  for (const m of item.modulesSummary) {
+    if (m.score == null) continue
+    const entry = acc.get(m.module) || { sum: 0, count: 0 }
+    entry.sum += m.score
+    entry.count += 1
+    acc.set(m.module, entry)
+  }
+  const out = new Map<string, number>()
+  acc.forEach((v, k) => out.set(k, Math.round(v.sum / v.count)))
+  return out
+}
+
 function SkeletonCard() {
   return (
     <div className="gm-history-card p-5">
@@ -113,35 +154,177 @@ function SkeletonCard() {
   )
 }
 
+function CompareModal({
+  group,
+  onClose,
+  t,
+  i18n,
+}: {
+  group: HistoryGroup
+  onClose: () => void
+  t: TFunction
+  i18n: { language: string }
+}) {
+  const scored = group.items.filter((i) => i.overallScore != null)
+  const [currentId, setCurrentId] = useState(scored[0]?.sessionId)
+  const [baselineId, setBaselineId] = useState(scored[1]?.sessionId ?? scored[0]?.sessionId)
+
+  const current = scored.find((s) => s.sessionId === currentId)
+  const baseline = scored.find((s) => s.sessionId === baselineId)
+
+  const currentModules = current ? getModuleScores(current) : new Map<string, number>()
+  const baselineModules = baseline ? getModuleScores(baseline) : new Map<string, number>()
+
+  const moduleKeys = Array.from(new Set([...baselineModules.keys(), ...currentModules.keys()])).sort(
+    (a, b) => {
+      const ia = MODULE_ORDER.indexOf(a)
+      const ib = MODULE_ORDER.indexOf(b)
+      return (ia === -1 ? MODULE_ORDER.length : ia) - (ib === -1 ? MODULE_ORDER.length : ib)
+    }
+  )
+
+  function formatSessionLabel(item: HistoryItem): string {
+    return `${new Date(item.createdAt).toLocaleString(i18n.language)} · ${item.overallScore ?? '-'}`
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="gm-modal-backdrop" onClick={onClose} />
+      <div className="gm-modal max-w-xl w-full max-h-[85vh] overflow-auto">
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900">{t('history.compareTitle')}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="p-6 space-y-5">
+          <div className="text-sm text-gray-500 truncate">{group.url}</div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                {t('history.compareBaseline')}
+              </label>
+              <select
+                value={baselineId}
+                onChange={(e) => setBaselineId(e.target.value)}
+                className="gm-compare-select"
+              >
+                {scored.map((s) => (
+                  <option key={s.sessionId} value={s.sessionId}>
+                    {formatSessionLabel(s)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                {t('history.compareCurrent')}
+              </label>
+              <select
+                value={currentId}
+                onChange={(e) => setCurrentId(e.target.value)}
+                className="gm-compare-select"
+              >
+                {scored.map((s) => (
+                  <option key={s.sessionId} value={s.sessionId}>
+                    {formatSessionLabel(s)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <table className="gm-compare-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>{t('history.compareBaseline')}</th>
+                <th>{t('history.compareCurrent')}</th>
+                <th>{t('history.compareDelta')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="font-medium text-gray-900">{t('history.compareOverall')}</td>
+                <td className={`font-bold ${getScoreColor(baseline?.overallScore ?? null)}`}>
+                  {baseline?.overallScore ?? '-'}
+                </td>
+                <td className={`font-bold ${getScoreColor(current?.overallScore ?? null)}`}>
+                  {current?.overallScore ?? '-'}
+                </td>
+                <td>
+                  <DeltaBadge
+                    delta={scoreDelta(current?.overallScore ?? null, baseline?.overallScore ?? null)}
+                  />
+                </td>
+              </tr>
+              {moduleKeys.map((key) => {
+                const b = baselineModules.get(key) ?? null
+                const c = currentModules.get(key) ?? null
+                return (
+                  <tr key={key}>
+                    <td className="text-gray-600">{getModuleName(t, key)}</td>
+                    <td className={getScoreColor(b)}>{b ?? '-'}</td>
+                    <td className={getScoreColor(c)}>{c ?? '-'}</td>
+                    <td>
+                      <DeltaBadge delta={scoreDelta(c, b)} />
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function HistoryPage() {
   const { isLoggedIn, isLoading } = useAuth()
   const navigate = useNavigate()
-  const [data, setData] = useState<HistoryResponse | null>(null)
+  const [items, setItems] = useState<HistoryItem[]>([])
+  const [pagination, setPagination] = useState<HistoryResponse['pagination'] | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState('')
   const { t, i18n } = useTranslation()
 
   const [detailItem, setDetailItem] = useState<HistoryItem | null>(null)
   const [deleteItem, setDeleteItem] = useState<HistoryItem | null>(null)
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null)
+  const [compareGroup, setCompareGroup] = useState<HistoryGroup | null>(null)
+  const [retestLoading, setRetestLoading] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   const fetchHistory = useCallback(
-    async (page = 1) => {
-      setLoading(true)
+    async (page = 1, append = false) => {
+      if (append) setLoadingMore(true)
+      else setLoading(true)
       try {
-        const res = await fetch(`/api/diagnostic/history?page=${page}`, { credentials: 'include' })
+        const res = await fetch(`/api/diagnostic/history?page=${page}&limit=${PAGE_SIZE}`, {
+          credentials: 'include',
+        })
         if (!res.ok) {
           const data = await res.json().catch(() => ({}))
           throw new Error(data.error || t('history.fetchError'))
         }
         const resData: HistoryResponse = await res.json()
-        setData(resData)
+        setItems((prev) => {
+          if (!append) return resData.items
+          const known = new Set(prev.map((i) => i.sessionId))
+          return [...prev, ...resData.items.filter((i) => !known.has(i.sessionId))]
+        })
+        setPagination(resData.pagination)
         setError('')
       } catch (err: any) {
         setError(err.message || t('common.error'))
       } finally {
         setLoading(false)
+        setLoadingMore(false)
       }
     },
     [t]
@@ -163,6 +346,21 @@ export default function HistoryPage() {
     }
   }, [toast])
 
+  const groups = useMemo<HistoryGroup[]>(() => {
+    const map = new Map<string, HistoryItem[]>()
+    for (const item of items) {
+      const list = map.get(item.targetUrl)
+      if (list) list.push(item)
+      else map.set(item.targetUrl, [item])
+    }
+    return Array.from(map.entries()).map(([url, groupItems]) => ({
+      url,
+      items: [...groupItems].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    }))
+  }, [items])
+
   async function handleDelete(item: HistoryItem) {
     setDeleteLoading(item.sessionId)
     try {
@@ -176,11 +374,40 @@ export default function HistoryPage() {
       }
       setToast({ message: t('history.deleteSuccess'), type: 'success' })
       setDeleteItem(null)
-      await fetchHistory(data?.pagination.page || 1)
+      await fetchHistory(1)
     } catch (err: any) {
       setToast({ message: err.message || t('history.deleteFailed'), type: 'error' })
     } finally {
       setDeleteLoading(null)
+    }
+  }
+
+  async function handleRetest(item: HistoryItem) {
+    setRetestLoading(item.sessionId)
+    try {
+      const res = await fetch('/api/agent/diagnose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          url: item.targetUrl,
+          targetMarket: item.targetMarket,
+          language: i18n.language,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || t('history.retestFailed'))
+      }
+      const session = await res.json()
+      navigate(`/thinking/${session.sessionId}`)
+    } catch (err: unknown) {
+      setToast({
+        message: err instanceof Error && err.message ? err.message : t('history.retestFailed'),
+        type: 'error',
+      })
+    } finally {
+      setRetestLoading(null)
     }
   }
 
@@ -218,8 +445,6 @@ export default function HistoryPage() {
     )
   }
 
-  const items = data?.items || []
-
   if (items.length === 0) {
     return (
       <div className="gm-shell min-h-screen flex items-center justify-center px-4">
@@ -247,129 +472,166 @@ export default function HistoryPage() {
       <div className="max-w-4xl mx-auto">
         <div className="gm-history-header">
           <h1 className="text-xl font-bold text-gray-900">{t('history.title')}</h1>
-          <span className="gm-meta-copy">{t('history.total', { total: data?.pagination.total || 0 })}</span>
+          <span className="gm-meta-copy">{t('history.total', { total: pagination?.total || 0 })}</span>
         </div>
 
         <div className="gm-history-grid">
-          {items.map((item) => {
-            const statusBadge = getStatusBadge(t, item.status)
-            const typeBadge = getTypeBadge(t, item.type)
-            const scoreColor = getScoreColor(item.overallScore)
-            const scoreBorder = getScoreBorder(item.overallScore)
-            const scoreLabel = getScoreLabel(t, item.overallScore)
-
-            const moduleStatusMap = new Map<string, string>()
-            item.modulesSummary.forEach((m) => {
-              const existing = moduleStatusMap.get(m.module)
-              if (!existing || existing !== 'completed') {
-                moduleStatusMap.set(m.module, m.status)
-              }
-            })
-            const completedModules = Array.from(moduleStatusMap.values()).filter((s) => s === 'completed').length
-            const totalModules = moduleStatusMap.size || 4
-
-            const isAgent = item.type === 'agent'
+          {groups.map((group) => {
+            const latest = group.items[0]
+            const previous = group.items[1]
+            const groupDelta = scoreDelta(latest?.overallScore ?? null, previous?.overallScore ?? null)
+            const scoredCount = group.items.filter((i) => i.overallScore != null).length
 
             return (
-              <div
-                key={item.sessionId}
-                className="gm-history-card block p-5"
-              >
-                <div className="flex items-start justify-between gap-4">
+              <div key={group.url} className="gm-history-card overflow-hidden">
+                {/* Group header */}
+                <div className="gm-history-group-header">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <button
-                        onClick={() => setDetailItem(item)}
-                        className="font-medium text-gray-900 truncate hover:text-[#4285F4] transition text-left"
-                      >
-                        {item.targetUrl}
-                      </button>
-                      <span className={`shrink-0 ${statusBadge.className}`}>
-                        {statusBadge.label}
+                    <div className="font-medium text-gray-900 truncate">{group.url}</div>
+                    <div className="flex items-center gap-3 mt-1 text-sm text-gray-500 flex-wrap">
+                      <span>
+                        {t('history.targetMarket')}
+                        {t(`market.${latest.targetMarket}`) || latest.targetMarket}
                       </span>
-                      <span className={`shrink-0 ${typeBadge.className}`}>
-                        {typeBadge.label}
-                      </span>
+                      <span>{t('history.groupDiagnosisCount', { count: group.items.length })}</span>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-500 flex-wrap">
-                      <span>{t('history.targetMarket')}{t(`market.${item.targetMarket}`) || item.targetMarket}</span>
-                      <span>{t('history.diagnosisTime')}{new Date(item.createdAt).toLocaleString(i18n.language)}</span>
-                      {!isAgent && item.pagesCount > 0 && (
-                        <span>{t('history.pagesDetected')}: {item.pagesCount}</span>
-                      )}
-                    </div>
-
-                    {/* Legacy: module completion */}
-                    {!isAgent && (
-                      <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
-                        <span>{t('history.modulesCompleted', { completed: completedModules, total: totalModules })}</span>
-                      </div>
-                    )}
-
-                    {/* Agent: report summary */}
-                    {isAgent && item.reportSummary && (
-                      <div className="mt-2 text-xs text-gray-500 line-clamp-2">
-                        <span className="font-medium text-gray-600">{t('history.reportSummary')}:</span>{' '}
-                        {item.reportSummary}
-                      </div>
-                    )}
                   </div>
-
-                  <div className="flex flex-col items-end gap-2">
-                    <div className={`shrink-0 gm-score-card ${item.overallScore == null ? 'gm-score-card--empty' : item.overallScore >= 80 ? 'gm-score-card--good' : item.overallScore >= 60 ? 'gm-score-card--warn' : 'gm-score-card--bad'} ${scoreBorder}`}>
-                      <span className={`text-lg font-bold ${scoreColor}`}>{item.overallScore ?? '-'}</span>
+                  <div className="flex items-center gap-3 shrink-0">
+                    {groupDelta != null && (
+                      <div className="flex flex-col items-center gap-0.5">
+                        <DeltaBadge delta={groupDelta} />
+                        <span className="text-[10px] text-gray-400">{t('history.vsPrevious')}</span>
+                      </div>
+                    )}
+                    <div
+                      className={`gm-score-card w-14! h-14! ${
+                        latest.overallScore == null
+                          ? 'gm-score-card--empty'
+                          : latest.overallScore >= 80
+                            ? 'gm-score-card--good'
+                            : latest.overallScore >= 60
+                              ? 'gm-score-card--warn'
+                              : 'gm-score-card--bad'
+                      }`}
+                    >
+                      <span className={`text-base font-bold ${getScoreColor(latest.overallScore)}`}>
+                        {latest.overallScore ?? '-'}
+                      </span>
                       <span className="text-[10px] text-gray-400">/100</span>
                     </div>
-                    {item.overallScore != null && (
-                      <span className={`text-xs font-medium ${scoreColor}`}>{scoreLabel}</span>
+                    {scoredCount >= 2 && (
+                      <button
+                        onClick={() => setCompareGroup(group)}
+                        className="gm-btn gm-btn-tonal text-sm !py-1.5 !px-3"
+                      >
+                        {t('history.compare')}
+                      </button>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-4 flex items-center gap-3 border-t border-gray-100 pt-3">
-                  <Link
-                    to={`/report/${item.sessionId}`}
-                    className="gm-link text-sm"
-                  >
-                    {t('deepResearch.viewFullReport')} →
-                  </Link>
-                  <button
-                    onClick={() => setDetailItem(item)}
-                    className="text-sm text-gray-500 hover:text-gray-700 transition"
-                  >
-                    {t('history.detailTitle')}
-                  </button>
-                  <button
-                    onClick={() => setDeleteItem(item)}
-                    disabled={deleteLoading === item.sessionId}
-                    className="text-sm text-red-500 hover:text-red-700 transition ml-auto disabled:opacity-50"
-                  >
-                    {deleteLoading === item.sessionId ? '...' : t('history.delete')}
-                  </button>
+                {/* Sessions */}
+                <div className="gm-history-group-body">
+                  {group.items.map((item, idx) => {
+                    const statusBadge = getStatusBadge(t, item.status)
+                    const typeBadge = getTypeBadge(t, item.type)
+                    const older = group.items[idx + 1]
+                    const itemDelta = scoreDelta(item.overallScore, older?.overallScore ?? null)
+                    const isAgent = item.type === 'agent'
+
+                    return (
+                      <div key={item.sessionId} className="gm-history-session">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                              <button
+                                onClick={() => setDetailItem(item)}
+                                className="text-sm font-medium text-gray-700 hover:text-[#4285F4] transition"
+                              >
+                                {new Date(item.createdAt).toLocaleString(i18n.language)}
+                              </button>
+                              <span className={`shrink-0 ${statusBadge.className}`}>
+                                {statusBadge.label}
+                              </span>
+                              <span className={`shrink-0 ${typeBadge.className}`}>
+                                {typeBadge.label}
+                              </span>
+                            </div>
+                            {!isAgent && item.pagesCount > 0 && (
+                              <div className="text-xs text-gray-400">
+                                {t('history.pagesDetected')}: {item.pagesCount}
+                              </div>
+                            )}
+                            {isAgent && item.reportSummary && (
+                              <div className="text-xs text-gray-500 line-clamp-2">
+                                {item.reportSummary}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <DeltaBadge delta={itemDelta} />
+                            <span className={`text-lg font-bold ${getScoreColor(item.overallScore)}`}>
+                              {item.overallScore ?? '-'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex items-center gap-3 flex-wrap">
+                          <Link to={`/report/${item.sessionId}`} className="gm-link text-sm">
+                            {t('deepResearch.viewFullReport')} →
+                          </Link>
+                          <button
+                            onClick={() => setDetailItem(item)}
+                            className="text-sm text-gray-500 hover:text-gray-700 transition"
+                          >
+                            {t('history.detailTitle')}
+                          </button>
+                          <button
+                            onClick={() => handleRetest(item)}
+                            disabled={retestLoading === item.sessionId}
+                            className="text-sm text-[#4285F4] hover:text-[#3367d6] transition disabled:opacity-50"
+                          >
+                            {retestLoading === item.sessionId ? '...' : t('history.retest')}
+                          </button>
+                          <button
+                            onClick={() => setDeleteItem(item)}
+                            disabled={deleteLoading === item.sessionId}
+                            className="text-sm text-red-500 hover:text-red-700 transition ml-auto disabled:opacity-50"
+                          >
+                            {deleteLoading === item.sessionId ? '...' : t('history.delete')}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )
           })}
         </div>
 
-        {data && data.pagination.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-6">
-            {Array.from({ length: data.pagination.totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => fetchHistory(page)}
-                className={`w-8 h-8 rounded-full text-sm font-medium transition ${
-                  page === data.pagination.page
-                    ? 'bg-[#4285F4] text-white'
-                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
+        {pagination && pagination.page < pagination.totalPages && (
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={() => fetchHistory(pagination.page + 1, true)}
+              disabled={loadingMore}
+              className="gm-btn gm-btn-secondary"
+            >
+              {loadingMore ? t('common.loading') : t('history.loadMore')}
+            </button>
           </div>
         )}
       </div>
+
+      {/* Compare Modal */}
+      {compareGroup && (
+        <CompareModal
+          group={compareGroup}
+          onClose={() => setCompareGroup(null)}
+          t={t}
+          i18n={i18n}
+        />
+      )}
 
       {/* Detail Modal */}
       {detailItem && (

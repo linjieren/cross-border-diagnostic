@@ -47,6 +47,105 @@
     "preview": "Website Preview",
     "generating": "Generating..."
   },
+  "thinking": {
+    "workbenchTitle": "Diagnostic Workspace",
+    "workbenchSubtitle": "Full check of your site's technical foundation, conversion experience, and tracking",
+    "statusDone": "Report ready",
+    "statusRetry": "Retry needed",
+    "statusDiagnosing": "Diagnosing in background",
+    "statusGenerating": "Generating in background",
+    "preview": "Website Preview",
+    "heroTitle": "Generating your website diagnostic report",
+    "backHome": "Back to Home",
+    "reportReady": "Full report is ready",
+    "etaTotal": "Estimated 1-3 minutes",
+    "introBubble": "I'll check this website stage by stage and compile the findings into an actionable diagnostic report. The stage currently being checked expands automatically with live progress, and you can open any stage at any time to view details.",
+    "issueCount": "{{count}} items to review",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "reportGeneratedTitle": "Diagnostic report generated",
+    "reportGeneratedBody": "The full report is ready. Open the report page to see issues, impact, fix steps, and verification methods.",
+    "viewReport": "View Full Report",
+    "retry": "Retry",
+    "runningHint": "Checking now — conclusions update automatically when finished.",
+    "waiting": "Waiting to start",
+    "phaseStatus": {
+      "done": "Done",
+      "running": "Checking",
+      "failed": "Needs attention",
+      "queued": "Pending"
+    },
+    "findingStatus": {
+      "pass": "Pass",
+      "warn": "Optimize",
+      "fail": "Fail",
+      "pending": "TBD"
+    },
+    "moduleError": "Check ran into an issue: {{error}}",
+    "moduleDoneNoDetails": "Check complete, no details to show",
+    "moduleDoneNoIssues": "Check complete, no critical blockers found",
+    "moduleDoneIssues": "Check complete, found {{count}} issues to address",
+    "moduleErrorDetail": "The automated check could not complete. Review the manual re-check suggestions in the full report, or start a new diagnosis.",
+    "checkItem": "Check item",
+    "noDetail": "No details",
+    "findingLine": "{{label}}: {{check}}. {{detail}}",
+    "runningPositioning": "Identifying site positioning and product messaging",
+    "positioningDone": "Site positioning identified",
+    "syncChecking": "Checking in parallel",
+    "modulesDone": "Module checks complete",
+    "preparingReport": "Compiling the full diagnostic report",
+    "defaultReportTitle": "Diagnostic Report",
+    "basicUnderstanding": "Basic site understanding complete",
+    "initialVerdict": "Initial assessment: {{productType}}",
+    "productType": "Product type: {{productType}}",
+    "targetAudience": "Target audience: {{value}}",
+    "targetAudienceUnknown": "Target audience: to be confirmed in the report",
+    "valueProposition": "Value proposition: {{value}}",
+    "valuePropositionPending": "Value proposition: to be determined during report generation",
+    "reportContentReady": "Report content compiled",
+    "reportGeneratedDetail": "Full diagnostic report generated, including issue impact, fix steps, verification methods, and references.",
+    "streamError": "Something went wrong during diagnosis, please retry",
+    "phaseFailed": "Current stage could not complete",
+    "backgroundFailed": "Background diagnosis did not complete, please retry",
+    "phases": {
+      "positioning": {
+        "title": "Identify Site Positioning",
+        "scope": "Read page title, core copy, and product messaging",
+        "eta": "approx. 10-20s",
+        "detail": "First determines what the site sells, who it's for, and whether the value proposition is clear."
+      },
+      "technical": {
+        "title": "Check Speed & Technical Foundation",
+        "scope": "CDN, TTFB, HTTP/2/3, images, and caching",
+        "eta": "approx. 20-40s",
+        "detail": "Focuses on cross-border access speed and whether baseline performance undermines ad traffic landing."
+      },
+      "landing": {
+        "title": "Check Landing Page Trust & Conversion",
+        "scope": "Form security, trust elements, redirects, and lead capture",
+        "eta": "approx. 20-40s",
+        "detail": "Assesses whether visitors are willing to keep exploring, inquire, or submit a lead after arriving."
+      },
+      "content": {
+        "title": "Check Product Content Completeness",
+        "scope": "Product descriptions, images, videos, specs, scenarios, and localization",
+        "eta": "approx. 20-40s",
+        "detail": "Checks whether product pages sufficiently support overseas users' understanding and trust."
+      },
+      "tracking": {
+        "title": "Check Forms & Ad Tracking",
+        "scope": "GA4, ad pixels, conversion events, and cookie compliance",
+        "eta": "approx. 20-40s",
+        "detail": "Checks whether campaign performance is measurable and form leads are tracked correctly."
+      },
+      "report": {
+        "title": "Generate Diagnostic Report",
+        "scope": "Compile issues, impact, fix steps, and verification methods",
+        "eta": "approx. 20-60s",
+        "detail": "The report keeps a complete how-to guide so you can fix step by step and re-run the check."
+      }
+    }
+  },
   "diagnosis": {
     "statusAnalyzing": "Analyzing",
     "statusCompleted": "Completed",
@@ -80,7 +179,18 @@
     "pagesDetected": "Pages Detected",
     "typeLegacy": "Rule Scan",
     "typeAgent": "AI Diagnosis",
-    "reportSummary": "Report Summary"
+    "reportSummary": "Report Summary",
+    "groupDiagnosisCount": "{{count}} diagnoses",
+    "vsPrevious": "vs previous",
+    "compare": "Compare",
+    "compareTitle": "Retest Comparison",
+    "compareBaseline": "Baseline (earlier)",
+    "compareCurrent": "Current (latest)",
+    "compareOverall": "Overall Score",
+    "compareDelta": "Delta",
+    "retest": "Re-diagnose",
+    "retestFailed": "Failed to start re-diagnosis",
+    "loadMore": "Load more"
   },
   "login": {
     "titleInput": "Login / Register",
@@ -171,6 +281,55 @@
     "chatError": "Failed to send",
     "chatEmptyReply": "(No reply)",
     "quoting": "Quoting",
+    "scoreHero": {
+      "title": "Overall Score",
+      "moduleScores": "Module Scores"
+    },
+    "topIssuesThisWeek": "Top 3 things to do this week",
+    "issueSeverity": {
+      "fail": "Critical",
+      "warn": "Improve"
+    },
+    "issueCard": {
+      "problemLabel": "Issue: ",
+      "evidenceLabel": "Evidence: ",
+      "askConsultant": "Ask the consultant how to fix",
+      "askMessage": "How should I prioritize fixing the \"{{issue}}\" issue from the report? Please give concrete fix steps and how to verify."
+    },
+    "quickQuestions": {
+      "prioritize": {
+        "label": "Top 3 priorities",
+        "message": "Which three items in this report should I handle first? Please rank them by impact and implementation difficulty."
+      },
+      "verify": {
+        "label": "How to verify fixes",
+        "message": "If I fix my website according to the report, how should I re-verify that these issues are resolved?"
+      },
+      "techOrder": {
+        "label": "Technical execution order",
+        "message": "Please turn this report into a prioritized technical execution plan, as specific as possible."
+      },
+      "improveModule": {
+        "label": "Improve {{module}}",
+        "message": "How can I improve the score of the \"{{module}}\" module? Please give a concrete, actionable checklist."
+      },
+      "fixIssue": {
+        "label": "Fix \"{{issue}}\"",
+        "message": "How should I prioritize fixing the \"{{issue}}\" issue mentioned in the report? Please give concrete steps and expected impact."
+      },
+      "explainQuote": {
+        "label": "Explain this",
+        "message": "Please explain the report excerpt I selected, focusing on why it matters."
+      },
+      "fixQuote": {
+        "label": "How to fix",
+        "message": "For the issue I selected, please give concrete fix steps."
+      },
+      "verifyQuote": {
+        "label": "How to verify",
+        "message": "For the excerpt I selected, please tell me how to verify the fix afterwards."
+      }
+    },
     "status": "Status",
     "score": "Score",
     "roi": "Est.",

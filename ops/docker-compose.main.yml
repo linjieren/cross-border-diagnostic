@@ -6,6 +6,9 @@ services:
   backend:
     environment:
       - NODE_ENV=production
+      # 生产环境必须显式提供 JWT_SECRET（在 .env 或环境变量中），缺失时 compose 直接报错，
+      # 使 backend/src/routes/auth.ts 的“缺失即退出”守卫不再被默认值架空
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in production (no default)}
     restart: always
 
   frontend:

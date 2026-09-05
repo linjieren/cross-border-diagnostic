@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma";
 import { AgentEvent } from "../agent/orchestrator";
 import { chatWithConsultant, saveChatMessage, getChatHistory } from "../agent/consultantChat";
 import { buildReportDocumentHtml, generatePdfFromHtml } from "../agent/pdfGenerator";
+import { buildReportInsights } from "../agent/reportInsights";
 import { getYouTubeMetadata } from "../agent/youtubeMetadata";
 import {
   getSessionEventHistory,
@@ -240,6 +241,7 @@ agentRouter.get("/diagnose/:sessionId/report", async (req: Request, res: Respons
   try {
     const session = await prisma.diagnosticSession.findUnique({
       where: { id: req.params.sessionId as string },
+      include: { pages: { include: { results: true } } },
     });
 
     if (!session) {
@@ -254,6 +256,7 @@ agentRouter.get("/diagnose/:sessionId/report", async (req: Request, res: Respons
       status: session.status,
       reportMarkdown: session.reportMarkdown,
       reportHtml: session.reportHtml,
+      insights: buildReportInsights(session),
     });
   } catch (err) {
     console.error("get report error:", err);

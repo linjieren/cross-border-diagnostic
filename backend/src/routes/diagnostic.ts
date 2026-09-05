@@ -7,11 +7,29 @@ import { analyzeLeadPage } from "../lib/modules/lead-page-check";
 import { analyzeProductContent } from "../lib/modules/product-content-audit";
 import { analyzeFormTracking } from "../lib/modules/form-tracking";
 import { crawlSite } from "../lib/modules/crawler";
+import { assertPublicUrl, UrlSafetyError } from "../lib/urlSafety";
+import { createRateLimiter } from "../lib/rateLimit";
 import * as fs from "fs";
 import * as path from "path";
 
 export const diagnosticRouter = Router();
 const md = new MarkdownIt();
+
+// 重资源端点（会启动无头浏览器/爬虫）的进程内限流：每 IP 每分钟 10 次
+const heavyScanLimiter = createRateLimiter({ windowMs: 60_000, max: 10 });
+
+async function rejectUnsafeUrl(url: string, res: Response, req: Request): Promise<boolean> {
+  try {
+    await assertPublicUrl(url);
+    return false;
+  } catch (err) {
+    if (err instanceof UrlSafetyError) {
+      res.status(400).json({ error: (req as any).t?.("apiErrors.urlNotAllowed") ?? "url is not allowed", message: err.message });
+      return true;
+    }
+    throw err;
+  }
+}
 
 // ---- 辅助函数 ----
 
@@ -180,7 +198,7 @@ async function performSiteScan(sessionId: string, startUrl: string, targetMarket
 
 // ---- 创建诊断会话 ----
 
-diagnosticRouter.post("/session", async (req: Request, res: Response) => {
+diagnosticRouter.post("/session", heavyScanLimiter, async (req: Request, res: Response) => {
   try {
     const { url, targetMarket } = req.body as { url: string; targetMarket: string };
     if (!url || !targetMarket) {
@@ -189,6 +207,7 @@ diagnosticRouter.post("/session", async (req: Request, res: Response) => {
     }
 
     const normalized = normalizeUrl(url);
+    if (await rejectUnsafeUrl(normalized, res, req)) return;
     const sessionId = generateId("dsn");
     const userId = (req as any).user?.id || undefined;
 
@@ -297,7 +316,7 @@ diagnosticRouter.get("/session/:id/progress", async (req: Request, res: Response
 
 // ---- 手动触发扫描 ----
 
-diagnosticRouter.post("/crawl", async (req: Request, res: Response) => {
+diagnosticRouter.post("/crawl", heavyScanLimiter, async (req: Request, res: Response) => {
   try {
     const { sessionId } = req.body as { sessionId: string };
     if (!sessionId) {
@@ -313,6 +332,8 @@ diagnosticRouter.post("/crawl", async (req: Request, res: Response) => {
       res.status(404).json({ error: (req as any).t?.("apiErrors.sessionNotFound") ?? "session not found" });
       return;
     }
+
+    if (await rejectUnsafeUrl(session.url, res, req)) return;
 
     const existing = scanProgressStore.get(sessionId);
     if (existing && existing.status !== "completed" && existing.status !== "failed") {
@@ -333,7 +354,7 @@ diagnosticRouter.post("/crawl", async (req: Request, res: Response) => {
 
 // ---- 截图服务 ----
 
-diagnosticRouter.post("/screenshot", async (req: Request, res: Response) => {
+diagnosticRouter.post("/screenshot", heavyScanLimiter, async (req: Request, res: Response) => {
   let browser;
   try {
     const { url, sessionId, pageId } = req.body as {
@@ -347,6 +368,7 @@ diagnosticRouter.post("/screenshot", async (req: Request, res: Response) => {
     }
 
     const normalized = normalizeUrl(url);
+    if (await rejectUnsafeUrl(normalized, res, req)) return;
     browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -417,13 +439,8 @@ diagnosticRouter.get("/proxy", async (req: Request, res: Response) => {
 
     const normalized = normalizeUrl(targetUrl);
 
-    // 防御：禁止代理本地地址，防止嵌套代理和 SSRF
-    const parsed = new URL(normalized);
-    const hostname = parsed.hostname.toLowerCase();
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('127.') || hostname === '0.0.0.0') {
-      res.status(400).json({ error: (req as any).t?.("apiErrors.cannotProxyLocal") ?? "cannot proxy local addresses" });
-      return;
-    }
+    // 防御：拒绝私有/保留/回环地址，防止 SSRF（含 DNS 解析校验）
+    if (await rejectUnsafeUrl(normalized, res, req)) return;
 
     const response = await fetch(normalized, {
       headers: {
@@ -1355,7 +1372,7 @@ ${moduleSections}
 
 // ---- 分析页面（创建页面记录 + 初始化模块结果） ----
 
-diagnosticRouter.post("/analyze", async (req: Request, res: Response) => {
+diagnosticRouter.post("/analyze", heavyScanLimiter, async (req: Request, res: Response) => {
   try {
     const { url, sessionId } = req.body as { url: string; sessionId: string };
     if (!url || !sessionId) {
@@ -1364,6 +1381,7 @@ diagnosticRouter.post("/analyze", async (req: Request, res: Response) => {
     }
 
     const normalized = normalizeUrl(url);
+    if (await rejectUnsafeUrl(normalized, res, req)) return;
 
     // 检查 session 是否存在
     const session = await prisma.diagnosticSession.findUnique({

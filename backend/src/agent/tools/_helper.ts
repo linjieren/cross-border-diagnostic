@@ -43,4 +43,6 @@ export interface ToolFinding {
 export interface ToolResult {
   module: string;
   findings: ToolFinding[];
+  /** 工具整体执行失败时的错误信息（此时 findings 通常为空） */
+  error?: string;
 }

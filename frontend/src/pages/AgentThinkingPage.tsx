@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import Logo from '../components/Logo'
 import { extractReportTitle } from '../utils/reportInsights'
 
@@ -43,70 +45,23 @@ const MODULE_TO_PHASE: Record<string, string> = {
   form_tracking: 'tracking',
 }
 
-function createInitialPhases(): PhaseInfo[] {
-  return [
-    {
-      id: 'positioning',
-      title: '识别网站定位',
-      scope: '读取页面标题、核心文案和产品表达',
-      eta: '约 10-20 秒',
-      status: 'queued',
-      summary: '等待开始',
-      details: ['会先判断网站卖什么、面向谁、当前价值主张是否清晰。'],
-    },
-    {
-      id: 'technical',
-      title: '检查访问速度与技术基础',
-      scope: 'CDN、TTFB、HTTP/2/3、图片与缓存',
-      eta: '约 20-40 秒',
-      status: 'queued',
-      summary: '等待开始',
-      details: ['重点检查跨境访问速度和基础性能是否会影响广告流量承接。'],
-    },
-    {
-      id: 'landing',
-      title: '检查落地页信任与转化',
-      scope: '表单安全、信任元素、跳转与留资体验',
-      eta: '约 20-40 秒',
-      status: 'queued',
-      summary: '等待开始',
-      details: ['重点判断用户进站后是否愿意继续了解、咨询或提交线索。'],
-    },
-    {
-      id: 'content',
-      title: '检查产品内容完整度',
-      scope: '产品描述、图片、视频、参数、场景与本地化',
-      eta: '约 20-40 秒',
-      status: 'queued',
-      summary: '等待开始',
-      details: ['重点检查产品页是否足够支撑海外用户理解和信任。'],
-    },
-    {
-      id: 'tracking',
-      title: '检查表单和广告追踪',
-      scope: 'GA4、广告像素、转化事件与 Cookie 合规',
-      eta: '约 20-40 秒',
-      status: 'queued',
-      summary: '等待开始',
-      details: ['重点检查投放效果是否可衡量，表单线索是否能被正确追踪。'],
-    },
-    {
-      id: 'report',
-      title: '生成诊断报告',
-      scope: '整理问题、影响、修复步骤和验证方式',
-      eta: '约 20-60 秒',
-      status: 'queued',
-      summary: '等待开始',
-      details: ['报告会保留完整操作指南，方便你按步骤修改后重新检测。'],
-    },
-  ]
+function createInitialPhases(t: TFunction): PhaseInfo[] {
+  return PHASE_ORDER.map((id) => ({
+    id,
+    title: t(`thinking.phases.${id}.title`),
+    scope: t(`thinking.phases.${id}.scope`),
+    eta: t(`thinking.phases.${id}.eta`),
+    status: 'queued',
+    summary: t('thinking.waiting'),
+    details: [t(`thinking.phases.${id}.detail`)],
+  }))
 }
 
-function statusLabel(status: PhaseStatus) {
-  if (status === 'done') return '已完成'
-  if (status === 'running') return '检查中'
-  if (status === 'failed') return '需要处理'
-  return '待开始'
+function statusLabel(status: PhaseStatus, t: TFunction) {
+  if (status === 'done') return t('thinking.phaseStatus.done')
+  if (status === 'running') return t('thinking.phaseStatus.running')
+  if (status === 'failed') return t('thinking.phaseStatus.failed')
+  return t('thinking.phaseStatus.queued')
 }
 
 function statusClass(status: PhaseStatus) {
@@ -123,11 +78,11 @@ function phaseProgressClass(status: PhaseStatus) {
   return 'gm-phase-indicator gm-phase-indicator--queued'
 }
 
-function findingStatusLabel(status?: string) {
-  if (status === 'pass') return '通过'
-  if (status === 'warn') return '需优化'
-  if (status === 'fail') return '未通过'
-  return '待确认'
+function findingStatusLabel(status: string | undefined, t: TFunction) {
+  if (status === 'pass') return t('thinking.findingStatus.pass')
+  if (status === 'warn') return t('thinking.findingStatus.warn')
+  if (status === 'fail') return t('thinking.findingStatus.fail')
+  return t('thinking.findingStatus.pending')
 }
 
 function countIssues(result: any) {
@@ -135,24 +90,25 @@ function countIssues(result: any) {
   return findings.filter((finding: any) => finding.status === 'warn' || finding.status === 'fail').length
 }
 
-function summarizeModule(result: any) {
-  if (result?.error) return `检查遇到问题：${result.error}`
+function summarizeModule(result: any, t: TFunction) {
+  if (result?.error) return t('thinking.moduleError', { error: result.error })
   const findings = Array.isArray(result?.findings) ? result.findings : []
   const issueCount = countIssues(result)
-  if (!findings.length) return '检查完成，暂无可展示细节'
-  if (issueCount === 0) return '检查完成，未发现关键阻碍'
-  return `检查完成，发现 ${issueCount} 个需要关注的问题`
+  if (!findings.length) return t('thinking.moduleDoneNoDetails')
+  if (issueCount === 0) return t('thinking.moduleDoneNoIssues')
+  return t('thinking.moduleDoneIssues', { count: issueCount })
 }
 
-function moduleDetails(result: any) {
-  if (result?.error) return ['自动检查未能完成。建议先查看完整报告中的人工复核建议，或重新发起一次诊断。']
+function moduleDetails(result: any, t: TFunction) {
+  if (result?.error) return [t('thinking.moduleErrorDetail')]
   const findings = Array.isArray(result?.findings) ? result.findings : []
-  return findings.slice(0, 6).map((finding: any) => {
-    const label = findingStatusLabel(finding.status)
-    const check = finding.check || '检测项'
-    const detail = finding.detail || '暂无详情'
-    return `${label}：${check}。${detail}`
-  })
+  return findings.slice(0, 6).map((finding: any) =>
+    t('thinking.findingLine', {
+      label: findingStatusLabel(finding.status, t),
+      check: finding.check || t('thinking.checkItem'),
+      detail: finding.detail || t('thinking.noDetail'),
+    }),
+  )
 }
 
 function updatePhases(
@@ -168,18 +124,66 @@ function updatePhases(
   })
 }
 
+function PhaseBody({
+  details,
+  isRunning,
+  isExpanded,
+}: {
+  details: string[]
+  isRunning: boolean
+  isExpanded: boolean
+}) {
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const stickToBottomRef = useRef(true)
+  const { t } = useTranslation()
+
+  useEffect(() => {
+    const el = bodyRef.current
+    if (el && isExpanded && stickToBottomRef.current) {
+      el.scrollTop = el.scrollHeight
+    }
+  }, [details, isExpanded])
+
+  const handleScroll = () => {
+    const el = bodyRef.current
+    if (!el) return
+    stickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 32
+  }
+
+  return (
+    <div ref={bodyRef} onScroll={handleScroll} className="gm-phase-details-scroll">
+      <div className="gm-phase-details">
+        {details.map((detail, index) => (
+          <p key={`detail-${index}`} className="gm-body-copy">
+            {detail}
+          </p>
+        ))}
+        {isRunning && (
+          <p className="gm-phase-running">{t('thinking.runningHint')}</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function AgentThinkingPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const navigate = useNavigate()
-  const [phases, setPhases] = useState<PhaseInfo[]>(createInitialPhases)
-  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const { t } = useTranslation()
+  const tRef = useRef(t)
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
+  const [phases, setPhases] = useState<PhaseInfo[]>(() => createInitialPhases(t))
+  const [manualOverrides, setManualOverrides] = useState<Record<string, boolean>>({})
   const [connected, setConnected] = useState(false)
   const [error, setError] = useState('')
   const [finished, setFinished] = useState(false)
   const [targetUrl, setTargetUrl] = useState('')
-  const [reportTitle, setReportTitle] = useState('诊断报告')
+  const [reportTitle, setReportTitle] = useState(() => t('thinking.defaultReportTitle'))
   const esRef = useRef<EventSource | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const cardRefs = useRef<Record<string, HTMLElement | null>>({})
   const finishedRef = useRef(false)
   const reconnectTimerRef = useRef<number | null>(null)
   const activePhaseRef = useRef<string>('report')
@@ -187,6 +191,12 @@ export default function AgentThinkingPage() {
   const completedCount = phases.filter((phase) => phase.status === 'done').length
   const activePhase = phases.find((phase) => phase.status === 'running')
   const progress = Math.round((completedCount / phases.length) * 100)
+
+  const isAutoExpanded = (phase: PhaseInfo) =>
+    phase.status === 'running' || phase.status === 'failed'
+
+  const isPhaseExpanded = (phase: PhaseInfo) =>
+    phase.id in manualOverrides ? manualOverrides[phase.id] : isAutoExpanded(phase)
 
   useEffect(() => {
     if (activePhase?.id) {
@@ -220,21 +230,22 @@ export default function AgentThinkingPage() {
   }, [finished, sessionId])
 
   const setRunningStep = useCallback((step?: number) => {
+    const t = tRef.current
     if (step === 1) {
       setPhases((prev) =>
         updatePhases(prev, ['positioning'], {
           status: 'running',
-          summary: '正在识别网站定位和产品表达',
+          summary: t('thinking.runningPositioning'),
         }),
       )
     }
 
     if (step === 2) {
       setPhases((prev) => {
-        let next = updatePhases(prev, ['positioning'], { status: 'done', summary: '网站定位识别完成' })
+        let next = updatePhases(prev, ['positioning'], { status: 'done', summary: t('thinking.positioningDone') })
         next = updatePhases(next, ['technical', 'landing', 'content', 'tracking'], {
           status: 'running',
-          summary: '正在同步检查',
+          summary: t('thinking.syncChecking'),
         })
         return next
       })
@@ -244,11 +255,11 @@ export default function AgentThinkingPage() {
       setPhases((prev) => {
         let next = updatePhases(prev, ['technical', 'landing', 'content', 'tracking'], (phase) => ({
           status: phase.status === 'failed' ? 'failed' : 'done',
-          summary: phase.summary === '正在同步检查' ? '模块检查完成' : phase.summary,
+          summary: phase.status === 'running' ? t('thinking.modulesDone') : phase.summary,
         }))
         next = updatePhases(next, ['report'], {
           status: 'running',
-          summary: '正在整理完整诊断报告',
+          summary: t('thinking.preparingReport'),
         })
         return next
       })
@@ -274,16 +285,21 @@ export default function AgentThinkingPage() {
         break
       }
       case 'step-result': {
+        const t = tRef.current
         if (data.step === 1) {
           const result = data.payload?.result || {}
-          const productType = result.productType || result.raw || '已完成网站基础理解'
+          const productType = result.productType || result.raw || t('thinking.basicUnderstanding')
           setPhases((prev) =>
             updatePhases(prev, ['positioning'], {
-              summary: `初步判断：${productType}`,
+              summary: t('thinking.initialVerdict', { productType }),
               details: [
-                `产品类型：${productType}`,
-                result.targetAudience ? `目标受众：${result.targetAudience}` : '目标受众：需要结合报告进一步确认',
-                result.keyValueProposition ? `价值主张：${result.keyValueProposition}` : '价值主张：已进入报告生成阶段综合判断',
+                t('thinking.productType', { productType }),
+                result.targetAudience
+                  ? t('thinking.targetAudience', { value: result.targetAudience })
+                  : t('thinking.targetAudienceUnknown'),
+                result.keyValueProposition
+                  ? t('thinking.valueProposition', { value: result.keyValueProposition })
+                  : t('thinking.valuePropositionPending'),
               ],
             }),
           )
@@ -299,8 +315,8 @@ export default function AgentThinkingPage() {
               const issues = countIssues(result)
               next = updatePhases(next, [phaseId], {
                 status: result?.error ? 'failed' : 'done',
-                summary: summarizeModule(result),
-                details: moduleDetails(result),
+                summary: summarizeModule(result, t),
+                details: moduleDetails(result, t),
                 issueCount: issues,
               })
             })
@@ -311,8 +327,8 @@ export default function AgentThinkingPage() {
         if (data.step === 3) {
           setPhases((prev) =>
             updatePhases(prev, ['report'], {
-              summary: '报告内容已整理完成',
-              details: ['已生成完整诊断报告，包含问题影响、修复步骤、验证方式和参考资料。'],
+              summary: t('thinking.reportContentReady'),
+              details: [t('thinking.reportGeneratedDetail')],
             }),
           )
         }
@@ -323,10 +339,11 @@ export default function AgentThinkingPage() {
           setPhases((prev) => updatePhases(prev, ['positioning'], { status: 'done' }))
         }
         if (data.step === 2) {
+          const t = tRef.current
           setPhases((prev) =>
             updatePhases(prev, ['technical', 'landing', 'content', 'tracking'], (phase) => ({
               status: phase.status === 'failed' ? 'failed' : 'done',
-              summary: phase.summary === '正在同步检查' ? '模块检查完成' : phase.summary,
+              summary: phase.status === 'running' ? t('thinking.modulesDone') : phase.summary,
             })),
           )
         }
@@ -344,12 +361,12 @@ export default function AgentThinkingPage() {
         })))
         break
       case 'error':
-        setError(data.message || data.payload?.message || '诊断过程中遇到问题，请重试')
+        setError(data.message || data.payload?.message || tRef.current('thinking.streamError'))
         setConnected(false)
         setPhases((prev) =>
           updatePhases(prev, [activePhaseRef.current || 'report'], {
             status: 'failed',
-            summary: '当前阶段未能完成',
+            summary: tRef.current('thinking.phaseFailed'),
           }),
         )
         esRef.current?.close()
@@ -369,7 +386,8 @@ export default function AgentThinkingPage() {
       setError('')
       finishedRef.current = false
       setFinished(false)
-      setPhases(createInitialPhases())
+      setPhases(createInitialPhases(tRef.current))
+      setManualOverrides({})
     }
 
     const es = new EventSource(`/api/agent/diagnose/${sessionId}/stream`)
@@ -420,11 +438,11 @@ export default function AgentThinkingPage() {
             setReportTitle(extractReportTitle(data.reportMarkdown))
             setPhases((prev) => updatePhases(prev, PHASE_ORDER, (phase) => ({
               status: phase.status === 'failed' ? 'failed' : 'done',
-              summary: phase.summary === '等待开始' ? '已完成' : phase.summary,
+              summary: phase.status === 'queued' ? tRef.current('thinking.phaseStatus.done') : phase.summary,
             })))
           }
           if (data.status === 'failed') {
-            setError('后台诊断未能完成，请重试')
+            setError(tRef.current('thinking.backgroundFailed'))
           }
         })
         .catch(() => {})
@@ -433,19 +451,26 @@ export default function AgentThinkingPage() {
     return () => window.clearInterval(timer)
   }, [finished, sessionId])
 
+  const prevActivePhaseRef = useRef<string | undefined>(undefined)
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    const id = activePhase?.id
+    if (id && id !== prevActivePhaseRef.current) {
+      cardRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
-  }, [phases, finished])
+    prevActivePhaseRef.current = id
+  }, [activePhase?.id])
 
-  const togglePhase = (phaseId: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      if (next.has(phaseId)) next.delete(phaseId)
-      else next.add(phaseId)
-      return next
-    })
+  useEffect(() => {
+    if (finished && scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+    }
+  }, [finished])
+
+  const togglePhase = (phase: PhaseInfo) => {
+    setManualOverrides((prev) => ({
+      ...prev,
+      [phase.id]: !isPhaseExpanded(phase),
+    }))
   }
 
   return (
@@ -454,13 +479,19 @@ export default function AgentThinkingPage() {
         <div className="flex items-center gap-3">
           <Logo size="sm" />
           <div>
-            <h1 className="gm-topbar-title">诊断工作台</h1>
-            <p className="gm-topbar-subtitle">全方位检查网站技术基础、转化体验和追踪能力</p>
+            <h1 className="gm-topbar-title">{t('thinking.workbenchTitle')}</h1>
+            <p className="gm-topbar-subtitle">{t('thinking.workbenchSubtitle')}</p>
           </div>
         </div>
         <div className="gm-inline-meta">
           <span className={`gm-live-dot ${finished ? 'is-done' : error ? 'is-error' : 'is-live'}`} />
-          {finished ? '报告已生成' : error ? '需要重试' : connected ? '后台诊断中' : '后台生成中'}
+          {finished
+            ? t('thinking.statusDone')
+            : error
+              ? t('thinking.statusRetry')
+              : connected
+                ? t('thinking.statusDiagnosing')
+                : t('thinking.statusGenerating')}
         </div>
       </header>
 
@@ -468,12 +499,12 @@ export default function AgentThinkingPage() {
         {targetUrl && (
           <aside className="gm-preview-pane hidden lg:flex w-[42%] min-w-[420px] max-w-[760px] flex-col">
             <div className="gm-preview-toolbar">
-              <span>网站预览</span>
+              <span>{t('thinking.preview')}</span>
               <span className="truncate max-w-[280px]">{targetUrl}</span>
             </div>
             <iframe
               src={targetUrl}
-              title="网站预览"
+              title={t('thinking.preview')}
               className="w-full flex-1"
               sandbox="allow-scripts allow-same-origin allow-forms"
             />
@@ -486,14 +517,14 @@ export default function AgentThinkingPage() {
               <div className="flex items-center justify-between gap-4 mb-3">
                 <div>
                   <p className="gm-section-kicker">Diagnosis workspace</p>
-                  <h2 className="text-[22px] font-semibold text-[#202124] mt-1">正在生成网站诊断报告</h2>
+                  <h2 className="text-[22px] font-semibold text-[#202124] mt-1">{t('thinking.heroTitle')}</h2>
                 </div>
                 <button
                   type="button"
                   onClick={() => navigate('/')}
                   className="gm-btn gm-btn-secondary"
                 >
-                  返回首页
+                  {t('thinking.backHome')}
                 </button>
               </div>
               <div className="flex items-center gap-3">
@@ -506,7 +537,11 @@ export default function AgentThinkingPage() {
                 <span className="gm-meta-copy w-20 text-right">{finished ? 100 : progress}%</span>
               </div>
               <p className="gm-meta-copy mt-2">
-                {activePhase ? `${activePhase.title} · ${activePhase.eta}` : finished ? '完整报告已准备好' : '预计 1-3 分钟完成'}
+                {activePhase
+                  ? `${activePhase.title} · ${activePhase.eta}`
+                  : finished
+                    ? t('thinking.reportReady')
+                    : t('thinking.etaTotal')}
               </p>
             </div>
           </section>
@@ -519,13 +554,13 @@ export default function AgentThinkingPage() {
                 </div>
                 <div className="gm-bubble">
                   <div className="gm-bubble-content">
-                    我会按阶段检查这个网站，并把结论整理成一份可执行的诊断报告。阶段默认折叠，你可以点开查看当前检查内容和初步发现。
+                    {t('thinking.introBubble')}
                   </div>
                 </div>
               </div>
 
               {phases.map((phase) => {
-                const isExpanded = expanded.has(phase.id)
+                const isExpanded = isPhaseExpanded(phase)
                 const isRunning = phase.status === 'running'
 
                 return (
@@ -535,10 +570,15 @@ export default function AgentThinkingPage() {
                         <span>{phase.status === 'done' ? '' : PHASE_ORDER.indexOf(phase.id) + 1}</span>
                       </span>
                     </div>
-                    <article className="gm-collapse-card w-full">
+                    <article
+                      ref={(el) => {
+                        cardRefs.current[phase.id] = el
+                      }}
+                      className="gm-collapse-card w-full"
+                    >
                       <button
                         type="button"
-                        onClick={() => togglePhase(phase.id)}
+                        onClick={() => togglePhase(phase)}
                         className="gm-collapse-header"
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -546,11 +586,11 @@ export default function AgentThinkingPage() {
                             <div className="flex flex-wrap items-center gap-2">
                               <h3 className="text-sm font-semibold text-gray-900">{phase.title}</h3>
                               <span className={statusClass(phase.status)}>
-                                {statusLabel(phase.status)}
+                                {statusLabel(phase.status, t)}
                               </span>
                               {typeof phase.issueCount === 'number' && phase.issueCount > 0 && (
                                 <span className="gm-chip gm-chip--warning">
-                                  {phase.issueCount} 个关注项
+                                  {t('thinking.issueCount', { count: phase.issueCount })}
                                 </span>
                               )}
                             </div>
@@ -561,25 +601,22 @@ export default function AgentThinkingPage() {
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="hidden sm:inline gm-meta-copy">{phase.eta}</span>
-                            <span className="gm-meta-copy">{isExpanded ? '收起' : '展开'}</span>
+                            <span className="gm-meta-copy">{isExpanded ? t('thinking.collapse') : t('thinking.expand')}</span>
                           </div>
                         </div>
                       </button>
 
-                      {isExpanded && (
-                        <div className="gm-collapse-body">
-                          <div className="gm-phase-details">
-                            {phase.details.map((detail, index) => (
-                              <p key={`${phase.id}-${index}`} className="gm-body-copy">
-                                {detail}
-                              </p>
-                            ))}
-                            {isRunning && (
-                              <p className="gm-phase-running">正在检查，完成后会自动更新结论。</p>
-                            )}
+                      <div className={`gm-collapse-anim ${isExpanded ? 'is-open' : ''}`}>
+                        <div className="gm-collapse-anim-inner">
+                          <div className="gm-collapse-body">
+                            <PhaseBody
+                              details={phase.details}
+                              isRunning={isRunning}
+                              isExpanded={isExpanded}
+                            />
                           </div>
                         </div>
-                      )}
+                      </div>
                     </article>
                   </div>
                 )
@@ -591,17 +628,17 @@ export default function AgentThinkingPage() {
                     OK
                   </div>
                   <div className="gm-panel gm-workspace-success w-full px-4 py-4">
-                    <p className="text-sm font-semibold text-gray-900">诊断报告已生成</p>
+                    <p className="text-sm font-semibold text-gray-900">{t('thinking.reportGeneratedTitle')}</p>
                     <p className="text-base font-semibold text-gray-900 mt-1">{reportTitle}</p>
                     <p className="gm-body-copy mt-1">
-                      完整报告已准备好，进入报告页查看问题、影响、修复步骤和验证方式。
+                      {t('thinking.reportGeneratedBody')}
                     </p>
                     <button
                       type="button"
                       onClick={() => navigate(`/report/${sessionId}`)}
                       className="gm-btn gm-btn-primary mt-3"
                     >
-                      查看完整报告
+                      {t('thinking.viewReport')}
                     </button>
                   </div>
                 </div>
@@ -618,7 +655,7 @@ export default function AgentThinkingPage() {
                   onClick={() => connect(true)}
                   className="gm-btn gm-btn-danger"
                 >
-                  重试
+                  {t('thinking.retry')}
                 </button>
               </div>
             </div>
