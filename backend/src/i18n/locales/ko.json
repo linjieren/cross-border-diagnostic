@@ -165,7 +165,7 @@
     "feedbackNotFound": "피드백을 찾을 수 없습니다",
     "forbidden": "접근이 금지되었습니다",
     "emailOrPhoneRequired": "email 또는 phone이 필요합니다",
-    "mvpCodeWarning": "[MVP 테스트 모드] 인증 코드가 직접 반환되었습니다. 프로덕션 환경에서는 실제 SMS/이메일 게이트웨이를 사용해야 합니다.",
+    "mvpCodeWarning": "[개발 모드] 발송 채널이 설정되지 않아 인증 코드를 직접 반환합니다.",
     "tokenAndCodeRequired": "token과 code가 필요합니다",
     "invalidOrExpiredToken": "유효하지 않거나 만료된 token입니다",
     "invalidCode": "유효하지 않은 인증 코드입니다",
@@ -179,6 +179,10 @@
     "notFullyImplemented": "완전히 구현되지 않았습니다",
     "wechatCallbackNotImplemented": "WeChat OAuth 콜백 프레임워크가 준비되었으나, 전체 사용자 조회/생성 로직에는 자격 증명이 필요합니다",
     "wechatBindNotConfigured": "WeChat 연동이 설정되지 않았습니다: WECHAT_APPID / WECHAT_APPSECRET 환경 변수가 누락되었습니다",
-    "wechatBindNotImplemented": "WeChat 연동 프레임워크가 준비되었으나, 전체 로직에는 자격 증명이 필요합니다"
+    "wechatBindNotImplemented": "WeChat 연동 프레임워크가 준비되었으나, 전체 로직에는 자격 증명이 필요합니다",
+    "codeSent": "인증 코드가 발송되었습니다. 확인해 주세요",
+    "codeSendFailed": "인증 코드 발송에 실패했습니다. 잠시 후 다시 시도해 주세요",
+    "emailServiceNotConfigured": "이메일 발송 서비스가 설정되지 않았습니다. 관리자에게 문의하세요",
+    "smsServiceNotConfigured": "SMS 발송 서비스가 설정되지 않았습니다. 관리자에게 문의하세요"
   }
 }

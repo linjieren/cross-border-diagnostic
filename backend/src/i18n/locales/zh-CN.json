@@ -165,7 +165,7 @@
     "feedbackNotFound": "反馈不存在",
     "forbidden": "禁止访问",
     "emailOrPhoneRequired": "email 或 phone 为必填项",
-    "mvpCodeWarning": "【MVP 测试模式】验证码已直接返回。生产环境必须接入真实短信/邮件发送通道，禁止直接返回验证码。",
+    "mvpCodeWarning": "【开发模式】未配置发送通道，验证码已直接返回。",
     "tokenAndCodeRequired": "token 和 code 为必填项",
     "invalidOrExpiredToken": "token 无效或已过期",
     "invalidCode": "验证码无效",
@@ -179,6 +179,10 @@
     "notFullyImplemented": "尚未完全实现",
     "wechatCallbackNotImplemented": "微信 OAuth 回调框架已就绪，但完整用户查询/创建逻辑需在提供凭证后实现",
     "wechatBindNotConfigured": "微信绑定未配置：缺少 WECHAT_APPID / WECHAT_APPSECRET 环境变量",
-    "wechatBindNotImplemented": "微信绑定框架已就绪，完整逻辑需在提供凭证后实现"
+    "wechatBindNotImplemented": "微信绑定框架已就绪，完整逻辑需在提供凭证后实现",
+    "codeSent": "验证码已发送，请注意查收",
+    "codeSendFailed": "验证码发送失败，请稍后重试",
+    "emailServiceNotConfigured": "邮件发送服务未配置，请联系管理员",
+    "smsServiceNotConfigured": "短信发送服务未配置，请联系管理员"
   }
 }

@@ -165,7 +165,7 @@
     "feedbackNotFound": "フィードバックが見つかりません",
     "forbidden": "アクセスが禁止されています",
     "emailOrPhoneRequired": "emailまたはphoneが必要です",
-    "mvpCodeWarning": "【MVPテストモード】認証コードが直接返されました。本番環境では実際のSMS/メールゲートウェイを使用する必要があります。",
+    "mvpCodeWarning": "【開発モード】送信チャネル未設定のため、認証コードを直接返しています。",
     "tokenAndCodeRequired": "tokenおよびcodeが必要です",
     "invalidOrExpiredToken": "無効または期限切れのtokenです",
     "invalidCode": "無効な認証コードです",
@@ -179,6 +179,10 @@
     "notFullyImplemented": "完全には実装されていません",
     "wechatCallbackNotImplemented": "WeChat OAuthコールバックフレームワークは準備完了ですが、完全なユーザー照会/作成ロジックには認証情報が必要です",
     "wechatBindNotConfigured": "WeChat連携が設定されていません：WECHAT_APPID / WECHAT_APPSECRET環境変数が不足しています",
-    "wechatBindNotImplemented": "WeChat連携フレームワークは準備完了ですが、完全なロジックには認証情報が必要です"
+    "wechatBindNotImplemented": "WeChat連携フレームワークは準備完了ですが、完全なロジックには認証情報が必要です",
+    "codeSent": "認証コードを送信しました。ご確認ください",
+    "codeSendFailed": "認証コードの送信に失敗しました。しばらくしてから再試行してください",
+    "emailServiceNotConfigured": "メール送信サービスが設定されていません。管理者にお問い合わせください",
+    "smsServiceNotConfigured": "SMS送信サービスが設定されていません。管理者にお問い合わせください"
   }
 }

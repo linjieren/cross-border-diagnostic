@@ -20,6 +20,7 @@
     "ioredis": "^5.4.2",
     "jsonwebtoken": "^9.0.3",
     "markdown-it": "^14.2.0",
+    "nodemailer": "^10.0.0",
     "playwright": "^1.60.0"
   },
   "devDependencies": {
@@ -29,6 +30,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.19.19",
+    "@types/nodemailer": "^8.0.1",
     "prisma": "^6.2.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"

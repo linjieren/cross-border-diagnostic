@@ -165,7 +165,7 @@
     "feedbackNotFound": "Feedback not found",
     "forbidden": "Forbidden",
     "emailOrPhoneRequired": "email or phone is required",
-    "mvpCodeWarning": "[MVP Test Mode] Verification code returned directly. Production must use a real SMS/email gateway.",
+    "mvpCodeWarning": "[Dev Mode] No delivery channel configured; verification code returned directly.",
     "tokenAndCodeRequired": "token and code are required",
     "invalidOrExpiredToken": "Invalid or expired token",
     "invalidCode": "Invalid code",
@@ -179,6 +179,10 @@
     "notFullyImplemented": "Not fully implemented",
     "wechatCallbackNotImplemented": "WeChat OAuth callback framework is ready, but full user query/creation logic requires credentials.",
     "wechatBindNotConfigured": "WeChat bind not configured: missing WECHAT_APPID / WECHAT_APPSECRET environment variables",
-    "wechatBindNotImplemented": "WeChat bind framework is ready, full logic requires credentials."
+    "wechatBindNotImplemented": "WeChat bind framework is ready, full logic requires credentials.",
+    "codeSent": "Verification code sent, please check your inbox",
+    "codeSendFailed": "Failed to send verification code, please try again later",
+    "emailServiceNotConfigured": "Email service is not configured, please contact the administrator",
+    "smsServiceNotConfigured": "SMS service is not configured, please contact the administrator"
   }
 }

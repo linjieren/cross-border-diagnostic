@@ -49,7 +49,7 @@
 | 方向 | 状态 | 差距 |
 |---|---|---|
 | 诊断历史 | ✅ 已闭环 | HistoryPage 按 URL 分组 + 分差趋势 + 对比弹窗 + 重新诊断入口（2026-09-04）；缺报告分享链接 |
-| 登录闭环 | 🟡 部分 | magic-link + 微信登录已有；**验证码仅打日志，未接真实邮件/短信网关**；缺用户中心；`WeChatQRModal.tsx:54-66` 仍有一份 3 秒 mock 自动登录桩待清理 |
+| 登录闭环 | 🟡 部分 | magic-link + 微信登录已有；验证码通道已接通（SMTP 邮件 + 阿里云 SMS，2026-09-05），待配置真实凭证联调；缺用户中心；`WeChatQRModal.tsx:54-66` 仍有一份 3 秒 mock 自动登录桩待清理 |
 | 邮件通知 | ❌ 未做 | 无 SMTP/邮件服务集成，只有飞书 webhook |
 | 多语言 | 🟡 部分 | 4 语言 UI 框架在；报告内容与本地化建议的完整度未验证 |
 | 全球测速 | ❌ 未做 | 仍单节点，未接第三方性能 API（TECH-BOUNDARY 列了备选） |
@@ -63,6 +63,7 @@
 
 | 日期 | 变更 | 说明 |
 |---|---|---|
+| 2026-09-05 | 接通真实验证码发送通道 | 新增 `backend/src/lib/verificationSender.ts`：邮件走 SMTP（nodemailer）、短信走阿里云 SMS（HMAC-SHA1 手动签名，免 SDK）；`routes/auth.ts` magic-link 接入通道 + IP 限流（5 次/分钟）；通道已配置→只回 token 不回 code，未配置+生产→503 硬阻塞，未配置+dev→保留直接返回 code 的降级；四语言 i18n 新增 codeSent/codeSendFailed/emailServiceNotConfigured/smsServiceNotConfigured；`ops/.env.template` 与两套 compose 增加 SMTP_/ALIYUN_SMS_ 环境变量透传 |
 | 2026-09-04 | 前端体验改造 P0 批次 | ①过程页：运行中阶段默认展开+流式自动滚动+完成自动折叠（AgentThinkingPage）；②报告页：评分 Hero（SVG 评分环+三档语义色）、Top Issues 前置、问题卡片、动态 quickQuestions+章节锚点（ReportPage + 新建 components/report/，后端报告接口新增 `insights` 字段，见 `backend/src/agent/reportInsights.ts`）；③历史页：按 URL 分组+分差趋势+对比弹窗+重新诊断入口（HistoryPage）；④视觉统一：Home/LoginModal 迁入 `--gm-*` 体系、删除 Google Sans、删除微信登录 3 秒 mock 桩（LoginModal）、过程页硬编码中文全部迁入 i18n（四语言）。研究依据：`docs/frontend-benchmark-research.md` |
 | 2026-09-04 | 商业研究建档 | `docs/business-plan-research.md`：结论——诊断是 vitamin 非 painkiller，建议转向 B2B2B（服务商获客钩子+提效工具），首个场景打「广告落地页承接体检」；90 天计划：服务商试点 / 单行业做深+盲测 / ¥99 landing page 付费实验 |
 | 2026-09-04 | 创建 EVOLUTION.md | 建立跨 session 进度档案机制 |
@@ -76,8 +77,8 @@
 
 ### 短期（第一阶段：产品闭环补齐，对照 proposal §9.1）
 
-1. **接通真实验证码发送**：邮件（SMTP/SES）与短信网关，替换 `routes/auth.ts` 中"仅打日志"的 dev 实现（生产硬阻塞）。
-2. **诊断完成邮件通知**：报告摘要 + 下载链接自动发送（依赖第 1 项）。
+1. ~~接通真实验证码发送~~ **已完成（2026-09-05）**：SMTP 邮件 + 阿里云 SMS 通道接入 `routes/auth.ts`（`lib/verificationSender.ts`），生产未配置通道直接 503；待真实凭证到位后联调。
+2. **诊断完成邮件通知**：报告摘要 + 下载链接自动发送（SMTP 通道已就绪，可复用 nodemailer）。
 3. **清理 `WeChatQRModal.tsx` 残留的 mock 登录桩**；补齐视觉统一后的端到端走查（需 DB 环境）。
 4. **商业验证优先于功能堆砌**（见 `docs/business-plan-research.md`）：服务商试点 10-15 家 → 单行业规则库+盲测 → ¥99 landing page 付费实验。
 
@@ -97,7 +98,7 @@
 
 ## 已知问题与风险
 
-- **验证码发送为 dev 桩**：`auth.ts` 明确注释 "In production, the code MUST be sent via a real SMS/email gateway"——上线前必须解决。
+- ~~**验证码发送为 dev 桩**~~ 已解决（2026-09-05）：SMTP/阿里云 SMS 已接入；剩余风险为真实凭证未配置时的联调验证，以及 codeStore 仍为进程内存。
 - **内存态存储**：验证码 codeStore、微信 stateStore 均为进程内存 Map，重启丢失、不支持多实例（代码注释建议换 Redis）。
 - **REMEDIATION-REPORT.md 摘要**（`product/requirements/REMEDIATION-REPORT.md`）：针对真实客户 lightmind.art 的整改方案 spec——设计了一套独立的整改报告数据结构（模块评分、findings、recommendations 含 ROI 与部署代码、D30/D60/D90 路线图），建议用 Next.js + shadcn + window.print() 导出，长期目标是 backend 提供 `POST /api/remediation-report` 数据 API。尚未实现，可作为"报告产品化"方向参考。
 - **技术边界要点**（`product/requirements/TECH-BOUNDARY.md`）：iframe 预览受 X-Frame-Options 限制需降级提示；抓取须用无头浏览器（SPA/robots）；外部请求一律走后端代理规避 CORS；全站四模块诊断预估 15-45 秒；部署代码建议需按建站平台（WordPress/Shopify/Wix/自建）分别说明。

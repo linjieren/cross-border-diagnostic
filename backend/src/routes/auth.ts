@@ -1,6 +1,8 @@
 import { Router, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma";
+import { createRateLimiter } from "../lib/rateLimit";
+import { isEmailConfigured, isSmsConfigured, sendEmailCode, sendSmsCode } from "../lib/verificationSender";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 if (!JWT_SECRET) {
@@ -36,8 +38,11 @@ setInterval(cleanupExpiredCodes, 5 * 60 * 1000);
 
 export const authRouter = Router();
 
+// 验证码下发端点限流：每 IP 每分钟 5 次
+const magicLinkLimiter = createRateLimiter({ windowMs: 60_000, max: 5 });
+
 // POST /api/auth/magic-link
-authRouter.post("/magic-link", async (req: Request, res: Response) => {
+authRouter.post("/magic-link", magicLinkLimiter, async (req: Request, res: Response) => {
   try {
     const { email, phone } = req.body as { email?: string; phone?: string };
     if (!email && !phone) {
@@ -56,18 +61,45 @@ authRouter.post("/magic-link", async (req: Request, res: Response) => {
       phone,
     });
 
-    // MVP: return code in response for easy testing
-    // Production: send via SMS/email service
+    const channelConfigured = email ? isEmailConfigured() : isSmsConfigured();
+
+    if (channelConfigured) {
+      try {
+        if (email) await sendEmailCode(email, code);
+        else await sendSmsCode(phone!, code);
+      } catch (sendErr) {
+        codeStore.delete(token);
+        console.error(`verification code send failed for ${target}:`, sendErr);
+        res.status(502).json({ error: (req as any).t?.("apiErrors.codeSendFailed") ?? "验证码发送失败，请稍后重试" });
+        return;
+      }
+      res.json({
+        success: true,
+        token,
+        message: (req as any).t?.("apiErrors.codeSent") ?? "验证码已发送，请注意查收",
+      });
+      return;
+    }
+
+    if (process.env.NODE_ENV === "production") {
+      codeStore.delete(token);
+      console.error(`[FATAL-CONFIG] ${email ? "SMTP" : "Aliyun SMS"} is not configured but NODE_ENV=production; refusing to issue verification code for ${target}`);
+      res.status(503).json({
+        error: (req as any).t?.(email ? "apiErrors.emailServiceNotConfigured" : "apiErrors.smsServiceNotConfigured") ?? "发送服务未配置，请联系管理员",
+      });
+      return;
+    }
+
+    // Dev fallback: no real channel configured, return code in response for local testing
     console.warn(
-      `[MVP-WARN] Magic-Link code for ${target} is being returned directly in the API response. ` +
-      `This is ONLY for development/testing. In production, the code MUST be sent via a real SMS/email gateway.`
+      `[DEV-WARN] No ${email ? "SMTP" : "SMS"} channel configured; Magic-Link code for ${target} is returned directly in the API response (dev only).`
     );
 
     res.json({
       success: true,
       token,
       code,
-      message: (req as any).t?.("apiErrors.mvpCodeWarning") ?? "【MVP 测试模式】验证码已直接返回。生产环境必须接入真实短信/邮件发送通道，禁止直接返回验证码。",
+      message: (req as any).t?.("apiErrors.mvpCodeWarning") ?? "【开发模式】未配置发送通道，验证码已直接返回。",
     });
   } catch (err) {
     console.error("magic-link error:", err);
