@@ -49,7 +49,7 @@
 | 方向 | 状态 | 差距 |
 |---|---|---|
 | 诊断历史 | ✅ 已闭环 | HistoryPage 按 URL 分组 + 分差趋势 + 对比弹窗 + 重新诊断入口（2026-09-04）；缺报告分享链接 |
-| 登录闭环 | 🟡 部分 | magic-link + 微信登录已有；验证码通道已接通（SMTP 邮件 + 阿里云 SMS，2026-09-05），待配置真实凭证联调；缺用户中心；`WeChatQRModal.tsx:54-66` 仍有一份 3 秒 mock 自动登录桩待清理 |
+| 登录闭环 | 🟡 部分 | magic-link + 微信登录已有；验证码通道已接通（SMTP 邮件 + 阿里云 SMS，2026-09-05），待配置真实凭证联调；缺用户中心；前端两处 mock 登录桩均已清理（LoginModal 09-04、WeChatQRModal 09-05），微信 OAuth 回调完整实现待凭证到位 |
 | 邮件通知 | ❌ 未做 | 无 SMTP/邮件服务集成，只有飞书 webhook |
 | 多语言 | 🟡 部分 | 4 语言 UI 框架在；报告内容与本地化建议的完整度未验证 |
 | 全球测速 | ❌ 未做 | 仍单节点，未接第三方性能 API（TECH-BOUNDARY 列了备选） |
@@ -63,6 +63,7 @@
 
 | 日期 | 变更 | 说明 |
 |---|---|---|
+| 2026-09-05 | 清理微信 mock 登录桩 + 端到端走查 | `WeChatQRModal.tsx` 删除 3 秒伪造登录/绑定成功的桩（此前会在无服务端会话的情况下伪造用户，属安全隐患），二维码容器从 `<img>` 改为 `<iframe>`（微信 qrconnect 返回 HTML 页面）；用 Playwright 对本地 dev 栈（scripts/dev-local.sh + docker db）做完整走查并全部通过：Home 提交 → 过程页 SSE → 报告页评分环 → 历史页 → 邮箱验证码登录（dev 降级）→ 微信绑定正确提示"未配置"无伪造成功。期间发现本机系统代理（127.0.0.1:1082）间歇性失败会导致后端 Chromium 抓取报 ERR_TUNNEL_CONNECTION_FAILED（会话标记 failed 属正确行为），非应用 bug |
 | 2026-09-05 | 诊断完成邮件通知 | 新增 `backend/src/lib/mailer.ts`（通用 SMTP 发信，verificationSender 改为复用）+ `backend/src/lib/reportNotifier.ts`：诊断完成后对登录且绑定邮箱的用户发送通知（含综合得分、报告链接 `${APP_BASE_URL}/report/:id`，中英文按 session.language 选择）；orchestrator 以 fire-and-forget 调用，发送失败不影响诊断流程；未配置 SMTP 时静默跳过 |
 | 2026-09-05 | 接通真实验证码发送通道 | 新增 `backend/src/lib/verificationSender.ts`：邮件走 SMTP（nodemailer）、短信走阿里云 SMS（HMAC-SHA1 手动签名，免 SDK）；`routes/auth.ts` magic-link 接入通道 + IP 限流（5 次/分钟）；通道已配置→只回 token 不回 code，未配置+生产→503 硬阻塞，未配置+dev→保留直接返回 code 的降级；四语言 i18n 新增 codeSent/codeSendFailed/emailServiceNotConfigured/smsServiceNotConfigured；`ops/.env.template` 与两套 compose 增加 SMTP_/ALIYUN_SMS_ 环境变量透传 |
 | 2026-09-04 | 前端体验改造 P0 批次 | ①过程页：运行中阶段默认展开+流式自动滚动+完成自动折叠（AgentThinkingPage）；②报告页：评分 Hero（SVG 评分环+三档语义色）、Top Issues 前置、问题卡片、动态 quickQuestions+章节锚点（ReportPage + 新建 components/report/，后端报告接口新增 `insights` 字段，见 `backend/src/agent/reportInsights.ts`）；③历史页：按 URL 分组+分差趋势+对比弹窗+重新诊断入口（HistoryPage）；④视觉统一：Home/LoginModal 迁入 `--gm-*` 体系、删除 Google Sans、删除微信登录 3 秒 mock 桩（LoginModal）、过程页硬编码中文全部迁入 i18n（四语言）。研究依据：`docs/frontend-benchmark-research.md` |
@@ -80,7 +81,7 @@
 
 1. ~~接通真实验证码发送~~ **已完成（2026-09-05）**：SMTP 邮件 + 阿里云 SMS 通道接入 `routes/auth.ts`（`lib/verificationSender.ts`），生产未配置通道直接 503；待真实凭证到位后联调。
 2. ~~诊断完成邮件通知~~ **已完成（2026-09-05）**：诊断完成后向登录用户邮箱发送摘要+报告链接（`lib/reportNotifier.ts`）。待 SMTP 凭证到位后联调真实发送。
-3. **清理 `WeChatQRModal.tsx` 残留的 mock 登录桩**；补齐视觉统一后的端到端走查（需 DB 环境）。
+3. ~~清理 `WeChatQRModal.tsx` 残留的 mock 登录桩；补齐视觉统一后的端到端走查~~ **已完成（2026-09-05）**：桩已清理，Playwright 全流程走查通过。
 4. **商业验证优先于功能堆砌**（见 `docs/business-plan-research.md`）：服务商试点 10-15 家 → 单行业规则库+盲测 → ¥99 landing page 付费实验。
 
 ### 中期（第一~二阶段过渡）

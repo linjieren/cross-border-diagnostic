@@ -27,7 +27,6 @@ export default function WeChatQRModal({ open, onClose, onSuccess, mode = "login"
     }
 
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
 
     const fetchQR = async () => {
       setLoading(true);
@@ -47,23 +46,11 @@ export default function WeChatQRModal({ open, onClose, onSuccess, mode = "login"
           setError(data.error || t("wechatLogin.error"));
           return;
         }
+        if (cancelled) return;
         setQrUrl(data.qrUrl);
         setPolling(true);
-
-        // Simulated polling: 3-second mock success
-        timer = setTimeout(() => {
-          if (cancelled) return;
-          const mockUser: User = {
-            id: data.state || "wx_mock",
-            email: null,
-            phone: null,
-            name: "WeChat User",
-            avatar: null,
-            wechatOpenId: "mock_openid",
-            wechatUnionId: "mock_unionid",
-          };
-          onSuccess(mockUser);
-        }, 3000);
+        // 扫码完成的登录闭环依赖后端微信 OAuth 回调（WECHAT_APPID/SECRET 配置后实现），
+        // 此处只展示二维码，不再伪造登录成功。
       } catch {
         setError(t("home.errorNetwork"));
       } finally {
@@ -75,7 +62,6 @@ export default function WeChatQRModal({ open, onClose, onSuccess, mode = "login"
 
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
     };
   }, [open, mode, t, onSuccess]);
 
@@ -103,8 +89,8 @@ export default function WeChatQRModal({ open, onClose, onSuccess, mode = "login"
             <div className="py-8 text-sm text-red-600 text-center">{error}</div>
           ) : qrUrl ? (
             <>
-              <div className="w-48 h-48 border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center bg-gray-50">
-                <img src={qrUrl} alt="WeChat QR" className="w-full h-full object-contain" />
+              <div className="w-64 h-64 border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                <iframe src={qrUrl} title="WeChat QR" className="w-full h-full border-0" scrolling="no" />
               </div>
               <p className="text-sm text-gray-600 text-center">
                 {mode === "login" ? t("wechatLogin.scanPrompt") : t("wechatLogin.bindPrompt")}
