@@ -1,12 +1,10 @@
 import crypto from "crypto";
-import nodemailer from "nodemailer";
+import { isEmailConfigured, sendMail } from "./mailer";
 
-// 验证码发送通道：邮件走 SMTP（nodemailer），短信走阿里云 SMS RPC API（手动 HMAC-SHA1 签名，免 SDK）。
+// 验证码发送通道：邮件走 SMTP（lib/mailer），短信走阿里云 SMS RPC API（手动 HMAC-SHA1 签名，免 SDK）。
 // 任一通道未配置时由调用方回退到 dev 行为；生产环境未配置则直接报错，禁止静默降级。
 
-export function isEmailConfigured(): boolean {
-  return Boolean(process.env.SMTP_HOST && process.env.SMTP_FROM);
-}
+export { isEmailConfigured };
 
 export function isSmsConfigured(): boolean {
   return Boolean(
@@ -18,18 +16,7 @@ export function isSmsConfigured(): boolean {
 }
 
 export async function sendEmailCode(email: string, code: string): Promise<void> {
-  const port = Number(process.env.SMTP_PORT || 465);
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port,
-    secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === "true" : port === 465,
-    auth: process.env.SMTP_USER
-      ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-      : undefined,
-  });
-
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM,
+  await sendMail({
     to: email,
     subject: `登录验证码 / Login verification code: ${code}`,
     text: [

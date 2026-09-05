@@ -39,6 +39,8 @@ services:
       ALIYUN_SMS_SIGN_NAME: ${ALIYUN_SMS_SIGN_NAME:-}
       ALIYUN_SMS_TEMPLATE_CODE: ${ALIYUN_SMS_TEMPLATE_CODE:-}
       ALIYUN_SMS_REGION_ID: ${ALIYUN_SMS_REGION_ID:-cn-hangzhou}
+      # 邮件中的报告链接前缀（本地默认前端端口）
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:5173}
     volumes:
       - ./backend/src:/app/src
       - ./backend/prisma:/app/prisma

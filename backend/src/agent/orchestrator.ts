@@ -6,6 +6,7 @@ import { productContentTool } from "./tools/productContentTool";
 import { formTrackingTool } from "./tools/formTrackingTool";
 import { generateReport, ReportInput } from "./reportGenerator";
 import { prisma } from "../lib/prisma";
+import { notifyReportReady } from "../lib/reportNotifier";
 
 export interface AgentEvent {
   type: "step-start" | "step-think" | "step-result" | "step-complete" | "report-generating" | "report-complete" | "error";
@@ -211,6 +212,11 @@ export async function runAgentDiagnosis(
     emit({ type: "step-result", step: 3, payload: step3Result });
     emit({ type: "step-complete", step: 3 });
     emit({ type: "report-complete", payload: { markdownLength: report.markdown.length, htmlLength: report.html.length } });
+
+    // 诊断完成邮件通知：fire-and-forget，失败不影响诊断结果
+    notifyReportReady(sessionId).catch((notifyErr) => {
+      console.error(`report notification failed for session ${sessionId}:`, notifyErr);
+    });
   } catch (err: any) {
     const errorStep: StepData = {
       step: steps.length + 1,

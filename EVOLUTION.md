@@ -63,6 +63,7 @@
 
 | 日期 | 变更 | 说明 |
 |---|---|---|
+| 2026-09-05 | 诊断完成邮件通知 | 新增 `backend/src/lib/mailer.ts`（通用 SMTP 发信，verificationSender 改为复用）+ `backend/src/lib/reportNotifier.ts`：诊断完成后对登录且绑定邮箱的用户发送通知（含综合得分、报告链接 `${APP_BASE_URL}/report/:id`，中英文按 session.language 选择）；orchestrator 以 fire-and-forget 调用，发送失败不影响诊断流程；未配置 SMTP 时静默跳过 |
 | 2026-09-05 | 接通真实验证码发送通道 | 新增 `backend/src/lib/verificationSender.ts`：邮件走 SMTP（nodemailer）、短信走阿里云 SMS（HMAC-SHA1 手动签名，免 SDK）；`routes/auth.ts` magic-link 接入通道 + IP 限流（5 次/分钟）；通道已配置→只回 token 不回 code，未配置+生产→503 硬阻塞，未配置+dev→保留直接返回 code 的降级；四语言 i18n 新增 codeSent/codeSendFailed/emailServiceNotConfigured/smsServiceNotConfigured；`ops/.env.template` 与两套 compose 增加 SMTP_/ALIYUN_SMS_ 环境变量透传 |
 | 2026-09-04 | 前端体验改造 P0 批次 | ①过程页：运行中阶段默认展开+流式自动滚动+完成自动折叠（AgentThinkingPage）；②报告页：评分 Hero（SVG 评分环+三档语义色）、Top Issues 前置、问题卡片、动态 quickQuestions+章节锚点（ReportPage + 新建 components/report/，后端报告接口新增 `insights` 字段，见 `backend/src/agent/reportInsights.ts`）；③历史页：按 URL 分组+分差趋势+对比弹窗+重新诊断入口（HistoryPage）；④视觉统一：Home/LoginModal 迁入 `--gm-*` 体系、删除 Google Sans、删除微信登录 3 秒 mock 桩（LoginModal）、过程页硬编码中文全部迁入 i18n（四语言）。研究依据：`docs/frontend-benchmark-research.md` |
 | 2026-09-04 | 商业研究建档 | `docs/business-plan-research.md`：结论——诊断是 vitamin 非 painkiller，建议转向 B2B2B（服务商获客钩子+提效工具），首个场景打「广告落地页承接体检」；90 天计划：服务商试点 / 单行业做深+盲测 / ¥99 landing page 付费实验 |
@@ -78,7 +79,7 @@
 ### 短期（第一阶段：产品闭环补齐，对照 proposal §9.1）
 
 1. ~~接通真实验证码发送~~ **已完成（2026-09-05）**：SMTP 邮件 + 阿里云 SMS 通道接入 `routes/auth.ts`（`lib/verificationSender.ts`），生产未配置通道直接 503；待真实凭证到位后联调。
-2. **诊断完成邮件通知**：报告摘要 + 下载链接自动发送（SMTP 通道已就绪，可复用 nodemailer）。
+2. ~~诊断完成邮件通知~~ **已完成（2026-09-05）**：诊断完成后向登录用户邮箱发送摘要+报告链接（`lib/reportNotifier.ts`）。待 SMTP 凭证到位后联调真实发送。
 3. **清理 `WeChatQRModal.tsx` 残留的 mock 登录桩**；补齐视觉统一后的端到端走查（需 DB 环境）。
 4. **商业验证优先于功能堆砌**（见 `docs/business-plan-research.md`）：服务商试点 10-15 家 → 单行业规则库+盲测 → ¥99 landing page 付费实验。
 

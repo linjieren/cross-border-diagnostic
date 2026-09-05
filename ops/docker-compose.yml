@@ -49,6 +49,8 @@ services:
       - ALIYUN_SMS_SIGN_NAME=${ALIYUN_SMS_SIGN_NAME:-}
       - ALIYUN_SMS_TEMPLATE_CODE=${ALIYUN_SMS_TEMPLATE_CODE:-}
       - ALIYUN_SMS_REGION_ID=${ALIYUN_SMS_REGION_ID:-cn-hangzhou}
+      # 邮件中的报告链接前缀
+      - APP_BASE_URL=${APP_BASE_URL:-}
     depends_on:
       db:
         condition: service_healthy
